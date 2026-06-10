@@ -173,8 +173,16 @@ export class AnthropicProvider implements AIProvider {
       if (e?.name === 'AbortError' || e?.name === 'APIUserAbortError') {
         throw new ProviderUnavailableError('AI extraction timed out')
       }
-      // Anthropic SDK throws errors with status — 429 + 5xx → unavailable
-      if (e?.status === 429 || (typeof e?.status === 'number' && e.status >= 500)) {
+      // Anthropic SDK throws errors with status —
+      // 429 + 5xx → service issue; 401/403/404 → model/account issue.
+      // Either way the agent cannot proceed — surface as 503 "unavailable" with a clean message.
+      if (
+        e?.status === 429 ||
+        e?.status === 401 ||
+        e?.status === 403 ||
+        e?.status === 404 ||
+        (typeof e?.status === 'number' && e.status >= 500)
+      ) {
         throw new ProviderUnavailableError(e.message ?? 'AI provider error')
       }
       // Network errors / unknown — treat as unavailable so the agent gets a clean message.

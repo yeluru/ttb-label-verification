@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardCopy } from 'lucide-react'
+import { ClipboardCopy, ChevronDown, Sparkles } from 'lucide-react'
 import { MOCK_DATASETS } from '@/lib/mock-data'
 import { TTB_STANDARD_WARNING_TEXT } from '@/lib/field-comparison'
 import type { MockDataset } from '@/lib/types'
@@ -9,42 +9,60 @@ interface Props {
   onLoad: (dataset: MockDataset) => void
   onInsertWarning: () => void
   selected?: string
+  compact?: boolean
 }
 
-export function LoadSampleSelector({ onLoad, onInsertWarning, selected }: Props) {
+export function LoadSampleSelector({
+  onLoad,
+  onInsertWarning,
+  selected,
+  compact = false,
+}: Props) {
   return (
-    <div className="space-y-2">
-      <label className="block text-xs font-medium uppercase tracking-wide text-[#64748B]">
-        Load sample data
-      </label>
-      <select
-        className="w-full h-9 rounded-md border border-[#E2E8F0] bg-white px-2 text-sm text-[#1E293B] focus:outline-none focus:border-[#1B4F8A] focus:ring-2 focus:ring-blue-100 cursor-pointer"
-        value={selected ?? ''}
-        onChange={(e) => {
-          const ds = MOCK_DATASETS.find((d) => d.label === e.target.value)
-          if (ds) onLoad(ds)
-        }}
-      >
-        <option value="" disabled>
-          — Select a test case —
-        </option>
-        {MOCK_DATASETS.map((d) => (
-          <option key={d.label} value={d.label}>
-            {d.displayName}
-          </option>
-        ))}
-      </select>
-      <div className="flex justify-end">
+    <div className={compact ? 'space-y-2' : 'space-y-2.5'}>
+      <div className="flex items-center justify-between">
+        <label className="eyebrow inline-flex items-center gap-1.5">
+          <Sparkles className="h-3 w-3 text-[#1B4F8A]" aria-hidden />
+          Quick start
+        </label>
         <button
           type="button"
           onClick={onInsertWarning}
           title={TTB_STANDARD_WARNING_TEXT}
-          className="inline-flex items-center gap-1.5 text-[13px] text-[#1B4F8A] hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B4F8A] rounded-sm px-1 cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1B4F8A] hover:text-[#163F6E] transition-colors cursor-pointer"
         >
           <ClipboardCopy className="h-3.5 w-3.5" aria-hidden />
-          Insert standard TTB warning
+          Insert TTB warning
         </button>
       </div>
+      <div className="relative">
+        <select
+          aria-label="Load sample dataset"
+          className="input-base appearance-none pr-9 cursor-pointer"
+          value={selected ?? ''}
+          onChange={(e) => {
+            const ds = MOCK_DATASETS.find((d) => d.label === e.target.value)
+            if (ds) onLoad(ds)
+          }}
+        >
+          <option value="" disabled>
+            Select a test case…
+          </option>
+          {MOCK_DATASETS.map((d) => (
+            <option key={d.label} value={d.label}>
+              {d.displayName}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          className="h-4 w-4 text-[#94A3B8] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"
+          aria-hidden
+        />
+      </div>
+      <p className="text-[11px] text-[#94A3B8] leading-snug">
+        Fills the form with a test scenario. You still need to upload the matching
+        label image from <span className="font-mono">/public/test-labels/</span>.
+      </p>
     </div>
   )
 }

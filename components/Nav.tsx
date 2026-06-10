@@ -2,22 +2,33 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Shield } from 'lucide-react'
+import { ShieldCheck, ExternalLink } from 'lucide-react'
 
-function NavLink({ href, label, active }: { href: string; label: string; active: boolean }) {
+function NavLink({
+  href,
+  label,
+  active,
+}: {
+  href: string
+  label: string
+  active: boolean
+}) {
   return (
     <Link
       href={href}
-      className={`relative h-14 inline-flex items-center px-3 text-sm font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1B4F8A] ${
+      aria-current={active ? 'page' : undefined}
+      className={`relative h-full inline-flex items-center px-4 text-sm font-medium transition-colors duration-150 ${
         active
           ? 'text-[#1B4F8A]'
-          : 'text-[#64748B] hover:text-[#1E293B]'
+          : 'text-[#475569] hover:text-[#0F172A]'
       }`}
-      aria-current={active ? 'page' : undefined}
     >
       {label}
       {active && (
-        <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#1B4F8A]" aria-hidden="true" />
+        <span
+          aria-hidden
+          className="absolute inset-x-3 -bottom-px h-0.5 bg-[#1B4F8A] rounded-full"
+        />
       )}
     </Link>
   )
@@ -26,18 +37,49 @@ function NavLink({ href, label, active }: { href: string; label: string; active:
 export function Nav() {
   const pathname = usePathname() ?? '/'
   return (
-    <header className="h-14 bg-white border-b border-[#E2E8F0] sticky top-0 z-30">
-      <div className="h-full max-w-[1400px] mx-auto px-4 sm:px-6 flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2 group">
-          <Shield className="h-5 w-5 text-[#1B4F8A]" aria-hidden="true" />
-          <span className="text-[16px] font-semibold text-[#1E293B] group-hover:text-[#1B4F8A] transition-colors">
-            TTB Label Verification
+    <header className="h-16 bg-white border-b border-[#E2E8F0] sticky top-0 z-30 backdrop-blur-[2px]">
+      <div className="h-full max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center gap-6">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 group focus:outline-none rounded-md"
+        >
+          <span className="h-9 w-9 rounded-md bg-[#1B4F8A] inline-flex items-center justify-center shadow-sm">
+            <ShieldCheck className="h-5 w-5 text-white" aria-hidden />
+          </span>
+          <span className="flex flex-col leading-tight">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#94A3B8]">
+              U.S. Treasury · TTB
+            </span>
+            <span className="text-[15px] font-semibold text-[#0F172A] group-hover:text-[#1B4F8A] transition-colors">
+              Label Verification
+            </span>
           </span>
         </Link>
-        <nav className="flex items-center gap-1" aria-label="Primary">
+
+        <nav className="ml-2 hidden sm:flex h-full items-stretch" aria-label="Primary">
           <NavLink href="/" label="Single Verify" active={pathname === '/'} />
-          <NavLink href="/batch" label="Batch Verify" active={pathname.startsWith('/batch')} />
+          <NavLink
+            href="/batch"
+            label="Batch Verify"
+            active={pathname.startsWith('/batch')}
+          />
         </nav>
+
+        <div className="ml-auto hidden md:flex items-center gap-3 text-xs text-[#94A3B8]">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" aria-hidden />
+            Prototype build
+          </span>
+          <a
+            href="https://www.ttb.gov/labeling"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-[#475569] hover:text-[#0F172A] transition-colors"
+          >
+            TTB labeling
+            <ExternalLink className="h-3 w-3" aria-hidden />
+          </a>
+        </div>
       </div>
     </header>
   )
