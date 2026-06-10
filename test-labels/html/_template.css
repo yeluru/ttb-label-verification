@@ -1,0 +1,98 @@
+/* Shared label styling — print-resolution alcohol label aesthetic, no decoration */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #f4ede0;
+  font-family: 'Georgia', 'Times New Roman', serif;
+  color: #1a1a1a;
+}
+.label {
+  width: 900px;
+  min-height: 1100px;
+  background: #ffffff;
+  border: 4px solid #1a1a1a;
+  padding: 40px;
+  margin: 40px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.flourish {
+  width: 200px;
+  height: 2px;
+  background: #1a1a1a;
+  margin: 12px 0;
+}
+.label .brand {
+  font-size: 56px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin: 16px 0 8px;
+  text-transform: uppercase;
+}
+.label .subtitle {
+  font-size: 18px;
+  letter-spacing: 0.4em;
+  margin: 0 0 24px;
+  text-transform: uppercase;
+}
+.label .class-type {
+  font-size: 24px;
+  font-style: italic;
+  margin: 12px 0 24px;
+}
+.label .row {
+  display: flex;
+  gap: 40px;
+  justify-content: center;
+  margin: 16px 0;
+  font-size: 22px;
+  font-weight: 600;
+}
+.label .abv {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  margin: 16px 0;
+}
+.label .net-contents {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 8px 0 24px;
+}
+.label .appellation {
+  font-size: 20px;
+  font-style: italic;
+  margin: 4px 0;
+}
+.label .country {
+  font-size: 20px;
+  margin: 4px 0;
+}
+.label .producer {
+  font-size: 16px;
+  margin: 24px 0 8px;
+  line-height: 1.6;
+  max-width: 720px;
+}
+.label .producer .name {
+  font-weight: 600;
+}
+.label .warning {
+  margin-top: 32px;
+  padding: 20px;
+  border-top: 2px solid #1a1a1a;
+  border-bottom: 2px solid #1a1a1a;
+  font-size: 14px;
+  line-height: 1.5;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+  font-weight: 700;
+  text-align: left;
+  max-width: 720px;
+  text-transform: none;
+}
+.label.beer { background: #fff8e7; border-color: #5a3010; }
+.label.wine { background: #fbf7ee; border-color: #4a1a1a; }
+.label.spirits { background: #ffffff; border-color: #1a1a1a; }
