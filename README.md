@@ -15,13 +15,60 @@ COLA IT integration, no authentication, and no data persistence.
 
 ---
 
-## Quick start
+## Testing in 30 seconds
+
+You do **not** need to create any PNGs or JPGs. All 15 test labels are
+**already committed** to `public/test-labels/`. Steps:
+
+```bash
+npm install
+cp .env.example .env.local        # then paste your real ANTHROPIC_API_KEY
+npm run dev                       # http://localhost:3000
+```
+
+In the browser:
+
+1. **Single Verify (`/`):** open the **Quick start** dropdown in the left
+   panel and pick *Spirits — All Fields Pass*. The matching JPG is
+   auto-uploaded, the form is auto-filled with the values printed on
+   that label, and the **Verify label** button lights up. Click it. A
+   PASS result appears in the right panel in under five seconds.
+2. **Try a FLAG case:** pick *Spirits — ABV Mismatch* from Quick start
+   and click Verify. The label shows 46 % but the form says 45 % — the
+   ABV field flags with a clear reason.
+3. **Try NEEDS REVIEW:** pick *Spirits — Degraded Image*. The bundled
+   JPG has a CSS glare overlay; the AI returns low confidence for the
+   obscured field.
+4. **Batch Verify (`/batch`):** click **Seed demo batch (3 labels)** on
+   the empty state. Three bundled spirits labels are queued with their
+   form rows pre-filled. Click **Verify batch** to watch results stream
+   in over SSE — one row per label, in real time.
+
+> **About the folders.** The `test-labels/` folder at the project root
+> only holds the **HTML source** for each label (committed so reviewers
+> can see exactly what text each label contains). The actual JPGs the
+> app uses live in `public/test-labels/` and are served by Next.js. You
+> never need to navigate either folder by hand — Quick start handles
+> the upload for you. See `test-labels/README.md` for the full
+> source-to-image mapping.
+
+### Without an API key
+
+If `ANTHROPIC_API_KEY` is missing, the server falls back to a
+`MockProvider` that mirrors the form data back as the "extracted"
+values. You can click through the UI and see every state, but the
+mock cannot read the actual image — every test case will look like
+PASS. Set a real key to exercise FLAG / NEEDS REVIEW paths.
+
+---
+
+## Quick start (long form)
 
 ```bash
 # 1. Install dependencies
 npm install
 
-# 2. Add your Anthropic key (optional — see "Without an API key" below)
+# 2. Add your Anthropic key (optional — see "Without an API key" above)
 cp .env.example .env.local
 # then edit .env.local and set ANTHROPIC_API_KEY=sk-ant-...
 

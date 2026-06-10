@@ -444,27 +444,34 @@ function IdleState() {
           Ready when you are
         </h3>
         <p className="text-[13.5px] text-[#475569] mt-2 leading-relaxed">
-          Upload a label image and complete the application form on the left.
-          Your verification result will appear here in under five seconds.
+          The fastest way to try this app is{' '}
+          <span className="font-semibold text-[#1B4F8A]">Quick start</span> in
+          the left panel — it loads a bundled test label and matching form
+          values in one click.
         </p>
       </div>
-      <ul className="text-[12.5px] text-[#475569] space-y-2 max-w-md text-left mt-2 w-full relative">
-        <ChecklistRow text="JPG, PNG, or PDF labels are supported" />
-        <ChecklistRow text="Use Quick start to load a bundled test case in one click" />
-        <ChecklistRow text="No data is stored — every verification is fresh" />
-      </ul>
+      <ol className="text-[12.5px] text-[#475569] space-y-2 max-w-md text-left mt-2 w-full relative num">
+        <ChecklistRow num={1} text="Open Quick start → pick a sample" />
+        <ChecklistRow num={2} text="The JPG + form auto-load" />
+        <ChecklistRow num={3} text="Click Verify label" />
+      </ol>
+      <p className="text-[11px] text-[#94A3B8] relative max-w-md leading-relaxed">
+        Or upload your own JPG, PNG, or PDF and fill the form by hand. No data
+        is stored — every verification runs fresh.
+      </p>
     </div>
   )
 }
 
-function ChecklistRow({ text }: { text: string }) {
+function ChecklistRow({ num, text }: { num: number; text: string }) {
   return (
     <li className="flex items-start gap-2.5 px-3 py-2 rounded-md bg-[#F8FAFC] border border-[#E2E8F0]">
-      <CheckCircle2
-        className="h-3.5 w-3.5 mt-0.5 text-[#16A34A] shrink-0"
+      <span
         aria-hidden
-        strokeWidth={2.25}
-      />
+        className="h-5 w-5 inline-flex items-center justify-center rounded-full bg-[#1B4F8A] text-[10px] font-bold text-white num shrink-0"
+      >
+        {num}
+      </span>
       <span className="text-[#0F172A]">{text}</span>
     </li>
   )
