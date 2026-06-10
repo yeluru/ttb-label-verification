@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ShieldCheck, ExternalLink } from 'lucide-react'
+import { ShieldCheck, ExternalLink, Github } from 'lucide-react'
 
 function NavLink({
   href,
@@ -17,19 +17,13 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`relative h-full inline-flex items-center px-4 text-sm font-medium transition-colors duration-150 ${
+      className={`relative inline-flex items-center h-9 px-3.5 rounded-md text-[13.5px] font-medium transition-colors duration-150 ${
         active
-          ? 'text-[#1B4F8A]'
-          : 'text-[#475569] hover:text-[#0F172A]'
+          ? 'bg-[#EEF4FB] text-[#1B4F8A]'
+          : 'text-[#475569] hover:text-[#0F172A] hover:bg-[#F6F8FB]'
       }`}
     >
       {label}
-      {active && (
-        <span
-          aria-hidden
-          className="absolute inset-x-3 -bottom-px h-0.5 bg-[#1B4F8A] rounded-full"
-        />
-      )}
     </Link>
   )
 }
@@ -37,26 +31,30 @@ function NavLink({
 export function Nav() {
   const pathname = usePathname() ?? '/'
   return (
-    <header className="h-16 bg-white border-b border-[#E2E8F0] sticky top-0 z-30 backdrop-blur-[2px]">
-      <div className="h-full max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center gap-6">
+    <header className="sticky top-0 z-30 bg-white/85 backdrop-blur border-b border-[#E2E8F0]">
+      <div className="h-16 max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center gap-6">
         <Link
           href="/"
-          className="flex items-center gap-2.5 group focus:outline-none rounded-md"
+          className="flex items-center gap-2.5 group rounded-md outline-none"
         >
-          <span className="h-9 w-9 rounded-md bg-[#1B4F8A] inline-flex items-center justify-center shadow-sm">
-            <ShieldCheck className="h-5 w-5 text-white" aria-hidden />
+          <span className="relative h-10 w-10 rounded-lg bg-gradient-to-br from-[#1B4F8A] to-[#163F6E] inline-flex items-center justify-center shadow-sm">
+            <ShieldCheck className="h-5 w-5 text-white" aria-hidden strokeWidth={2.25} />
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-lg ring-1 ring-inset ring-white/15"
+            />
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#94A3B8]">
+            <span className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-[#94A3B8]">
               U.S. Treasury · TTB
             </span>
-            <span className="text-[15px] font-semibold text-[#0F172A] group-hover:text-[#1B4F8A] transition-colors">
+            <span className="text-[15px] font-semibold text-[#0F172A] group-hover:text-[#1B4F8A] transition-colors tracking-tight">
               Label Verification
             </span>
           </span>
         </Link>
 
-        <nav className="ml-2 hidden sm:flex h-full items-stretch" aria-label="Primary">
+        <nav className="ml-2 hidden sm:flex items-center gap-1" aria-label="Primary">
           <NavLink href="/" label="Single Verify" active={pathname === '/'} />
           <NavLink
             href="/batch"
@@ -65,16 +63,19 @@ export function Nav() {
           />
         </nav>
 
-        <div className="ml-auto hidden md:flex items-center gap-3 text-xs text-[#94A3B8]">
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#16A34A]" aria-hidden />
+        <div className="ml-auto hidden md:flex items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 chip">
+            <span className="relative flex h-1.5 w-1.5" aria-hidden>
+              <span className="absolute inline-flex h-full w-full rounded-full bg-[#16A34A] opacity-75 animate-ping" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#16A34A]" />
+            </span>
             Prototype build
           </span>
           <a
             href="https://www.ttb.gov/labeling"
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-1 text-[#475569] hover:text-[#0F172A] transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-[#475569] hover:text-[#0F172A] transition-colors"
           >
             TTB labeling
             <ExternalLink className="h-3 w-3" aria-hidden />

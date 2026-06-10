@@ -20,7 +20,7 @@ export function BeverageTypeSelector({
     <div
       role="radiogroup"
       aria-label="Beverage type"
-      className="grid grid-cols-3 gap-1.5 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-1"
+      className="grid grid-cols-3 gap-1 rounded-lg border border-[#E2E8F0] bg-[#F1F5F9] p-1"
     >
       {OPTIONS.map((opt) => {
         const active = value === opt.value
@@ -32,13 +32,17 @@ export function BeverageTypeSelector({
             role="radio"
             aria-checked={active}
             onClick={() => onChange(opt.value)}
-            className={`h-9 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium transition-all duration-150 cursor-pointer ${
+            className={`relative h-10 inline-flex items-center justify-center gap-2 rounded-md text-[13px] font-semibold transition-all duration-150 cursor-pointer ${
               active
-                ? 'bg-[#1B4F8A] text-white shadow-sm'
-                : 'bg-transparent text-[#475569] hover:text-[#0F172A] hover:bg-white'
+                ? 'bg-white text-[#1B4F8A] shadow-[0_1px_2px_0_rgb(15_23_42/0.06),0_1px_3px_0_rgb(15_23_42/0.08)]'
+                : 'text-[#475569] hover:text-[#0F172A] hover:bg-white/60'
             }`}
           >
-            <Icon className="h-4 w-4" aria-hidden strokeWidth={active ? 2.25 : 1.75} />
+            <Icon
+              className="h-4 w-4"
+              aria-hidden
+              strokeWidth={active ? 2.25 : 1.75}
+            />
             <span>{opt.label}</span>
           </button>
         )

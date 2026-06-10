@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, AlertTriangle, type LucideIcon } from 'lucide-react'
+import { CheckCircle2, XCircle, AlertTriangle, type LucideIcon, Clock } from 'lucide-react'
 import type { OverallStatus, VerificationResult } from '@/lib/types'
 
 interface Props {
@@ -14,31 +14,35 @@ const VARIANTS: Record<
     accent: string
     icon: LucideIcon
     headline: string
+    glow: string
   }
 > = {
   PASS: {
-    bg: 'bg-[#F0FDF4]',
+    bg: 'bg-gradient-to-br from-[#F0FDF4] to-[#ECFDF3]',
     text: 'text-[#15803D]',
     border: 'border-[#BBF7D0]',
     accent: 'bg-[#16A34A]',
     icon: CheckCircle2,
-    headline: 'All fields match',
+    headline: 'All fields match the submitted form',
+    glow: 'shadow-[0_4px_20px_-4px_rgb(22_163_74/0.15)]',
   },
   FLAG: {
-    bg: 'bg-[#FEF2F2]',
+    bg: 'bg-gradient-to-br from-[#FEF2F2] to-[#FEF1F1]',
     text: 'text-[#B91C1C]',
     border: 'border-[#FECACA]',
     accent: 'bg-[#DC2626]',
     icon: XCircle,
-    headline: 'One or more fields flagged',
+    headline: 'One or more fields do not match',
+    glow: 'shadow-[0_4px_20px_-4px_rgb(220_38_38/0.15)]',
   },
   'NEEDS REVIEW': {
-    bg: 'bg-[#FFFBEB]',
+    bg: 'bg-gradient-to-br from-[#FFFBEB] to-[#FFF9E5]',
     text: 'text-[#B45309]',
     border: 'border-[#FDE68A]',
     accent: 'bg-[#D97706]',
     icon: AlertTriangle,
-    headline: 'Human review recommended',
+    headline: 'AI uncertain on one or more fields',
+    glow: 'shadow-[0_4px_20px_-4px_rgb(217_119_6/0.15)]',
   },
 }
 
@@ -54,40 +58,44 @@ export function OverallBadge({ result }: Props) {
     <div
       role="status"
       aria-live="polite"
-      className={`relative overflow-hidden rounded-lg border ${v.border} ${v.bg}`}
+      className={`relative overflow-hidden rounded-xl border ${v.border} ${v.bg} ${v.glow} fade-up`}
     >
       <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${v.accent}`} />
-      <div className="flex items-start gap-4 p-5 pl-6">
-        <div className={`shrink-0 mt-0.5 ${v.text}`}>
-          <Icon className="h-7 w-7" aria-hidden strokeWidth={2} />
+      <div className="flex items-center gap-5 p-5 pl-6">
+        <div className={`shrink-0 ${v.text}`}>
+          <Icon className="h-9 w-9" aria-hidden strokeWidth={1.85} />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-            <span className={`text-[18px] font-bold tracking-tight ${v.text}`}>
+            <span className={`text-[22px] font-bold tracking-tight leading-none ${v.text}`}>
               {result.overall}
             </span>
-            <span className={`text-sm ${v.text} opacity-80`}>{v.headline}</span>
+            <span className={`text-[13px] ${v.text} opacity-85`}>{v.headline}</span>
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-[#475569]">
-            <span className="num">
-              <span className="font-semibold text-[#0F172A]">{passCount}</span>
-              <span className="text-[#94A3B8]"> / {total}</span>{' '}
-              matched
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px]">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="num text-[#0F172A] font-bold">{passCount}</span>
+              <span className="text-[#94A3B8]">/</span>
+              <span className="num text-[#94A3B8]">{total}</span>
+              <span className="text-[#475569]">matched</span>
             </span>
             {flagCount > 0 && (
-              <span className="num">
-                <span className="font-semibold text-[#DC2626]">{flagCount}</span>{' '}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#DC2626]" aria-hidden />
+                <span className="num text-[#DC2626] font-bold">{flagCount}</span>
                 <span className="text-[#475569]">flagged</span>
               </span>
             )}
             {reviewCount > 0 && (
-              <span className="num">
-                <span className="font-semibold text-[#D97706]">{reviewCount}</span>{' '}
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#D97706]" aria-hidden />
+                <span className="num text-[#D97706] font-bold">{reviewCount}</span>
                 <span className="text-[#475569]">needs review</span>
               </span>
             )}
-            <span className="num text-[#94A3B8] ml-auto">
-              Analyzed in {(result.processingMs / 1000).toFixed(1)}s
+            <span className="ml-auto inline-flex items-center gap-1 text-[#94A3B8] num">
+              <Clock className="h-3 w-3" aria-hidden />
+              {(result.processingMs / 1000).toFixed(1)}s
             </span>
           </div>
         </div>

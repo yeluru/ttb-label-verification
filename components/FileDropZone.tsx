@@ -1,6 +1,6 @@
 'use client'
 
-import { Upload, X, FileText, FileImage, Info } from 'lucide-react'
+import { Upload, X, FileText, FileImage, Info, CheckCircle2 } from 'lucide-react'
 import { useCallback, useRef, useState } from 'react'
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   multiple?: boolean
   onFiles?: (files: File[]) => void
   error?: string | null
-  compact?: boolean
+  helperHint?: string
 }
 
 function formatBytes(b: number): string {
@@ -31,7 +31,7 @@ export function FileDropZone({
   multiple = false,
   accept = '.jpg,.jpeg,.png,.pdf,application/pdf,image/jpeg,image/png',
   error,
-  compact = false,
+  helperHint,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
@@ -61,22 +61,28 @@ export function FileDropZone({
     const Icon = fileIcon(file.name)
     const isPdf = /\.pdf$/i.test(file.name)
     return (
-      <div className="space-y-2">
-        <div className="flex items-center gap-3 rounded-md bg-[#F8FAFC] border border-[#E2E8F0] px-3 py-2.5">
-          <span className="h-9 w-9 rounded-md bg-white border border-[#E2E8F0] inline-flex items-center justify-center shrink-0">
-            <Icon className="h-4 w-4 text-[#1B4F8A]" aria-hidden />
+      <div className="space-y-2 fade-up">
+        <div className="group relative flex items-center gap-3 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] px-3 py-2.5">
+          <span className="h-10 w-10 rounded-md bg-white border border-[#BBF7D0] inline-flex items-center justify-center shrink-0">
+            <Icon className="h-4.5 w-4.5 text-[#16A34A]" aria-hidden />
           </span>
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-medium text-[#0F172A] truncate" title={file.name}>
+            <div
+              className="text-[13.5px] font-semibold text-[#0F172A] truncate flex items-center gap-1.5"
+              title={file.name}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5 text-[#16A34A] shrink-0" aria-hidden />
               {file.name}
             </div>
-            <div className="text-[11px] text-[#94A3B8] num">{formatBytes(file.size)}</div>
+            <div className="text-[11px] text-[#15803D] num mt-0.5">
+              {formatBytes(file.size)} · Ready to verify
+            </div>
           </div>
           <button
             type="button"
             onClick={() => onFile(null)}
             aria-label="Remove file"
-            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[#94A3B8] hover:text-[#DC2626] hover:bg-white transition-colors cursor-pointer"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[#475569] hover:text-[#DC2626] hover:bg-white transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
@@ -91,10 +97,8 @@ export function FileDropZone({
     )
   }
 
-  const height = compact ? 'min-h-[88px]' : multiple ? 'min-h-[120px]' : 'min-h-[100px]'
-
   return (
-    <div className="space-y-1.5">
+    <div className="space-y-2">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
@@ -104,28 +108,44 @@ export function FileDropZone({
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
-        className={`w-full ${height} rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-2 px-4 py-4 transition-all duration-150 cursor-pointer text-center ${
+        className={`group w-full rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-3 px-4 py-7 transition-all duration-200 cursor-pointer text-center ${
           dragOver
-            ? 'border-[#1B4F8A] bg-[#EEF4FB] scale-[1.005]'
+            ? 'border-[#1B4F8A] bg-[#EEF4FB] scale-[1.005] shadow-inner'
             : error
-              ? 'border-[#FECACA] bg-[#FEF2F2]/40 hover:bg-[#FEF2F2]'
-              : 'border-[#CBD5E1] bg-white hover:border-[#1B4F8A] hover:bg-[#EEF4FB]/40'
+              ? 'border-[#FECACA] bg-[#FEF2F2]/50 hover:bg-[#FEF2F2]'
+              : 'border-[#CBD5E1] bg-white hover:border-[#1B4F8A] hover:bg-[#EEF4FB]/50'
         }`}
       >
-        <span className="h-9 w-9 rounded-full bg-[#EEF4FB] inline-flex items-center justify-center">
-          <Upload className="h-4 w-4 text-[#1B4F8A]" aria-hidden strokeWidth={2.25} />
+        <span
+          className={`relative h-12 w-12 rounded-full inline-flex items-center justify-center transition-transform duration-200 ${
+            dragOver ? 'bg-[#1B4F8A] scale-110' : 'bg-[#EEF4FB] group-hover:scale-105'
+          }`}
+        >
+          <Upload
+            className={`h-5 w-5 ${dragOver ? 'text-white' : 'text-[#1B4F8A]'}`}
+            aria-hidden
+            strokeWidth={2.25}
+          />
         </span>
-        <div className="space-y-0.5">
-          <div className="text-sm font-medium text-[#0F172A]">
-            {multiple ? 'Drop label files or click to browse' : 'Drop label here or click to browse'}
+        <div className="space-y-1">
+          <div className="text-[14px] font-semibold text-[#0F172A]">
+            {multiple ? 'Drop label files here' : 'Drop label here or click to browse'}
           </div>
-          <div className="text-[11px] text-[#94A3B8]">
-            {multiple ? 'JPG, PNG or PDF · select multiple' : 'JPG, PNG or PDF · max 10 MB'}
+          <div className="text-[12px] text-[#64748B]">
+            {multiple
+              ? 'JPG, PNG, or PDF · select multiple at once'
+              : 'JPG, PNG, or PDF · up to 10 MB'}
           </div>
+          {helperHint && (
+            <div className="text-[11px] text-[#94A3B8] mt-1">{helperHint}</div>
+          )}
         </div>
       </button>
       {error && (
-        <p role="alert" className="text-xs text-[#DC2626] flex items-center gap-1.5">
+        <p
+          role="alert"
+          className="text-[12px] text-[#DC2626] flex items-center gap-1.5 fade-up"
+        >
           <span className="h-1 w-1 rounded-full bg-[#DC2626]" aria-hidden />
           {error}
         </p>

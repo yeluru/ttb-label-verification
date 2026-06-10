@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardCopy, ChevronDown, Sparkles } from 'lucide-react'
+import { ClipboardCopy, ChevronDown, Sparkles, Download } from 'lucide-react'
 import { MOCK_DATASETS } from '@/lib/mock-data'
 import { TTB_STANDARD_WARNING_TEXT } from '@/lib/field-comparison'
 import type { MockDataset } from '@/lib/types'
@@ -16,12 +16,12 @@ export function LoadSampleSelector({
   onLoad,
   onInsertWarning,
   selected,
-  compact = false,
 }: Props) {
+  const current = MOCK_DATASETS.find((d) => d.label === selected)
   return (
-    <div className={compact ? 'space-y-2' : 'space-y-2.5'}>
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between">
-        <label className="eyebrow inline-flex items-center gap-1.5">
+        <label className="inline-flex items-center gap-1.5 eyebrow">
           <Sparkles className="h-3 w-3 text-[#1B4F8A]" aria-hidden />
           Quick start
         </label>
@@ -38,7 +38,7 @@ export function LoadSampleSelector({
       <div className="relative">
         <select
           aria-label="Load sample dataset"
-          className="input-base appearance-none pr-9 cursor-pointer"
+          className="input-base appearance-none pr-9 cursor-pointer font-medium"
           value={selected ?? ''}
           onChange={(e) => {
             const ds = MOCK_DATASETS.find((d) => d.label === e.target.value)
@@ -46,7 +46,7 @@ export function LoadSampleSelector({
           }}
         >
           <option value="" disabled>
-            Select a test case…
+            Select a bundled test case…
           </option>
           {MOCK_DATASETS.map((d) => (
             <option key={d.label} value={d.label}>
@@ -59,10 +59,20 @@ export function LoadSampleSelector({
           aria-hidden
         />
       </div>
-      <p className="text-[11px] text-[#94A3B8] leading-snug">
-        Fills the form with a test scenario. You still need to upload the matching
-        label image from <span className="font-mono">/public/test-labels/</span>.
+      <p className="text-[11.5px] text-[#64748B] leading-snug">
+        Picks the beverage type, fills the form, <em className="not-italic font-medium text-[#0F172A]">and</em>{' '}
+        stages the matching JPG. One click ready to verify.
       </p>
+      {current && (
+        <a
+          href={`/test-labels/${current.label}.jpg`}
+          download
+          className="inline-flex items-center gap-1.5 text-[11.5px] text-[#475569] hover:text-[#1B4F8A] transition-colors"
+        >
+          <Download className="h-3 w-3" aria-hidden />
+          Download {current.label}.jpg
+        </a>
+      )}
     </div>
   )
 }

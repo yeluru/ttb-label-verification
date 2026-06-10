@@ -9,9 +9,12 @@ import {
   Files,
   HelpCircle,
   Loader2,
+  Play,
   RefreshCw,
   Trash2,
+  Trophy,
   XCircle,
+  Zap,
 } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { BeverageTypeSelector } from '@/components/BeverageTypeSelector'
@@ -36,6 +39,8 @@ import { rasterizePdfFile } from '@/lib/pdf-preprocessor'
 import { isAcceptedFile, validateFormData } from '@/lib/validation'
 import { getApplicableFields } from '@/lib/beverage-fields'
 import { TTB_STANDARD_WARNING_TEXT } from '@/lib/field-comparison'
+import { loadSampleFile } from '@/lib/sample-loader'
+import { MOCK_DATASETS } from '@/lib/mock-data'
 
 interface UploadedFile {
   id: string
@@ -71,6 +76,7 @@ export default function BatchVerifyPage() {
   })
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [rowErrors, setRowErrors] = useState<Record<string, Set<LabelFieldKey>>>({})
+  const [seedingDemo, setSeedingDemo] = useState(false)
 
   const addFiles = useCallback((files: File[]) => {
     const accepted = files.filter((f) => isAcceptedFile(f))
@@ -123,6 +129,7 @@ export default function BatchVerifyPage() {
     })
   }
 
+  // Load one sample dataset and apply it to ALL existing uploaded rows.
   const handleLoadSample = (ds: MockDataset) => {
     setBeverageType(ds.beverageType)
     setIsImport(ds.isImport)
@@ -144,6 +151,35 @@ export default function BatchVerifyPage() {
       }
       return cp
     })
+  }
+
+  // Seed a representative spirits demo batch — one pass + one ABV flag + one degraded.
+  const seedDemoBatch = async () => {
+    setSeedingDemo(true)
+    try {
+      const keys = ['spirits-pass', 'spirits-abv-mismatch', 'spirits-degraded']
+      const datasets = keys
+        .map((k) => MOCK_DATASETS.find((d) => d.label === k))
+        .filter((d): d is MockDataset => !!d)
+      const newUploads: UploadedFile[] = []
+      const newForms: BatchFormMap = {}
+      for (const ds of datasets) {
+        try {
+          const f = await loadSampleFile(ds)
+          const id = `${ds.label}-${Math.random().toString(36).slice(2, 8)}`
+          newUploads.push({ id, file: f })
+          newForms[id] = { ...ds.formData }
+        } catch (e) {
+          console.error('demo seed failed for', ds.label, e)
+        }
+      }
+      setBeverageType('spirits')
+      setIsImport(false)
+      setUploads((prev) => [...prev, ...newUploads])
+      setFormMap((prev) => ({ ...prev, ...newForms }))
+    } finally {
+      setSeedingDemo(false)
+    }
   }
 
   const newBatch = () => {
@@ -282,34 +318,45 @@ export default function BatchVerifyPage() {
   }
 
   const showResults = batchStatus !== 'idle'
+  const progressPct =
+    summary.total > 0 ? Math.round((completed / summary.total) * 100) : 0
 
   return (
-    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 lg:py-8 space-y-6">
+    <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 lg:py-10 space-y-6">
       <PageHeader
-        eyebrow="Bulk processing"
+        eyebrow="Batch label verification"
         title="Verify multiple labels in parallel"
         description="Upload all labels at once, fill the inline form rows, and process them concurrently. Results stream back as each label completes."
         actions={
-          uploads.length > 0 && (
-            <div className="hidden sm:flex items-center gap-1.5 text-xs text-[#475569] bg-white border border-[#E2E8F0] rounded-md px-2.5 py-1.5">
-              <Files className="h-3.5 w-3.5 text-[#1B4F8A]" aria-hidden />
-              <span className="num font-medium">{uploads.length}</span> queued
-            </div>
-          )
+          <div className="hidden sm:flex items-center gap-2">
+            {uploads.length > 0 && (
+              <span className="chip">
+                <Files className="h-3 w-3 text-[#1B4F8A]" aria-hidden />
+                <span className="num font-semibold text-[#0F172A]">
+                  {uploads.length}
+                </span>
+                queued
+              </span>
+            )}
+            <span className="chip">
+              <Zap className="h-3 w-3 text-[#1B4F8A]" aria-hidden />
+              SSE streaming
+            </span>
+          </div>
         }
       />
 
       {/* Configuration */}
-      <section className="card p-5" aria-labelledby="batch-config">
+      <section className="card p-5 fade-up" aria-labelledby="batch-config">
         <h2 id="batch-config" className="sr-only">
           Batch configuration
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-5 lg:items-end">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_320px] gap-5 lg:items-end">
           <div>
             <label className="eyebrow block mb-2">Beverage type</label>
             <BeverageTypeSelector value={beverageType} onChange={setBeverageType} />
           </div>
-          <label className="flex items-center gap-2.5 cursor-pointer group lg:pb-2">
+          <label className="flex items-center gap-2.5 cursor-pointer group lg:pb-2.5">
             <input
               type="checkbox"
               checked={isImport}
@@ -323,35 +370,35 @@ export default function BatchVerifyPage() {
           <LoadSampleSelector
             onLoad={handleLoadSample}
             onInsertWarning={handleInsertWarning}
-            compact
           />
         </div>
       </section>
 
       {/* File upload */}
       {!showResults && (
-        <section className="card p-5" aria-label="Upload labels">
+        <section className="card p-5 fade-up" aria-label="Upload labels">
           <FileDropZone
             file={null}
             onFile={(f) => f && addFiles([f])}
             multiple
             onFiles={addFiles}
+            helperHint={
+              uploads.length === 0
+                ? 'Or use the "Seed demo batch" button below for an instant 3-label demo.'
+                : undefined
+            }
           />
-          {uploads.length === 0 && (
-            <p className="text-[12px] text-[#94A3B8] mt-3 text-center">
-              Selected files will appear as rows below. Each row needs its own form
-              data before submission.
-            </p>
-          )}
         </section>
       )}
 
-      {/* Empty state for results view with no files */}
-      {uploads.length === 0 && !showResults && <BatchEmptyState />}
+      {/* Empty state with seed-demo affordance */}
+      {uploads.length === 0 && !showResults && (
+        <BatchEmptyState onSeedDemo={seedDemoBatch} seeding={seedingDemo} />
+      )}
 
       {/* Inline form table or results */}
       {uploads.length > 0 && (
-        <section className="card overflow-hidden">
+        <section className="card overflow-hidden fade-up">
           {/* Sticky summary header when results are showing */}
           {showResults && (
             <div
@@ -365,17 +412,25 @@ export default function BatchVerifyPage() {
               {summary.errors > 0 && (
                 <StatusPill status="ERROR" count={summary.errors} label="ERROR" />
               )}
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex items-center gap-3">
                 <span className="text-xs text-[#475569] num">
                   <span className="font-semibold text-[#0F172A]">{completed}</span>
                   <span className="text-[#94A3B8]"> / {summary.total}</span>{' '}
                   complete
                 </span>
                 {batchStatus === 'loading' && (
-                  <Loader2
-                    className="h-4 w-4 text-[#1B4F8A] animate-spin"
-                    aria-hidden
-                  />
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 w-24 bg-[#E2E8F0] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-[#1B4F8A] transition-all duration-300"
+                        style={{ width: `${progressPct}%` }}
+                      />
+                    </div>
+                    <Loader2
+                      className="h-4 w-4 text-[#1B4F8A] animate-spin"
+                      aria-hidden
+                    />
+                  </div>
                 )}
               </div>
             </div>
@@ -387,7 +442,7 @@ export default function BatchVerifyPage() {
                 <tr>
                   <th
                     scope="col"
-                    className="text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-[#475569] px-4 py-2.5 w-[180px]"
+                    className="text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#475569] px-4 py-3 w-[200px]"
                   >
                     File
                   </th>
@@ -396,7 +451,7 @@ export default function BatchVerifyPage() {
                       <th
                         scope="col"
                         key={f.key}
-                        className="text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-[#475569] px-2.5 py-2.5 min-w-[150px]"
+                        className="text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#475569] px-2.5 py-3 min-w-[150px]"
                       >
                         <div className="flex items-center justify-between gap-2">
                           <span>{f.label}</span>
@@ -413,7 +468,7 @@ export default function BatchVerifyPage() {
                   {showResults && (
                     <th
                       scope="col"
-                      className="text-left text-[11px] font-semibold uppercase tracking-[0.06em] text-[#475569] px-4 py-2.5"
+                      className="text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#475569] px-4 py-3"
                     >
                       Result
                     </th>
@@ -438,15 +493,23 @@ export default function BatchVerifyPage() {
                       }`}
                     >
                       <td className="px-4 py-3 align-top">
-                        <div
-                          className="text-[13px] font-medium text-[#0F172A] truncate max-w-[180px]"
-                          title={u.file.name}
-                        >
-                          {u.file.name}
-                        </div>
-                        <div className="text-[10px] text-[#94A3B8] mt-0.5 uppercase tracking-wide num">
-                          {u.file.name.split('.').pop()} ·{' '}
-                          {(u.file.size / 1024).toFixed(0)} KB
+                        <div className="flex items-center gap-2">
+                          <span className="h-7 w-7 rounded-md bg-[#EEF4FB] border border-[#DCE9F5] inline-flex items-center justify-center shrink-0">
+                            <span className="text-[9.5px] font-bold uppercase tracking-wide text-[#1B4F8A] num">
+                              {(u.file.name.split('.').pop() ?? '').slice(0, 3)}
+                            </span>
+                          </span>
+                          <div className="min-w-0">
+                            <div
+                              className="text-[13px] font-medium text-[#0F172A] truncate"
+                              title={u.file.name}
+                            >
+                              {u.file.name}
+                            </div>
+                            <div className="text-[10.5px] text-[#94A3B8] num">
+                              {(u.file.size / 1024).toFixed(0)} KB
+                            </div>
+                          </div>
                         </div>
                       </td>
 
@@ -463,7 +526,7 @@ export default function BatchVerifyPage() {
                                   value={value}
                                   onChange={(e) => updateRow(u.id, f.key, e.target.value)}
                                   rows={2}
-                                  className={`w-full min-w-[150px] text-[12px] rounded-md border ${hasError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'} bg-white px-2 py-1.5 focus:outline-none focus:border-[#1B4F8A] focus:ring-2 focus:ring-[#1B4F8A]/15 transition-colors`}
+                                  className={`w-full min-w-[150px] text-[12.5px] rounded-md border ${hasError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'} bg-white px-2 py-1.5 focus:outline-none focus:border-[#1B4F8A] focus:ring-2 focus:ring-[#1B4F8A]/15 transition-colors leading-snug`}
                                   aria-invalid={hasError}
                                 />
                               ) : (
@@ -471,7 +534,7 @@ export default function BatchVerifyPage() {
                                   type="text"
                                   value={value}
                                   onChange={(e) => updateRow(u.id, f.key, e.target.value)}
-                                  className={`w-full h-8 text-[12px] rounded-md border ${hasError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'} bg-white px-2 focus:outline-none focus:border-[#1B4F8A] focus:ring-2 focus:ring-[#1B4F8A]/15 transition-colors`}
+                                  className={`w-full h-8 text-[12.5px] rounded-md border ${hasError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'} bg-white px-2 focus:outline-none focus:border-[#1B4F8A] focus:ring-2 focus:ring-[#1B4F8A]/15 transition-colors`}
                                   aria-invalid={hasError}
                                 />
                               )}
@@ -483,7 +546,7 @@ export default function BatchVerifyPage() {
                         <td className="px-4 py-3 align-top">
                           <ResultCell ev={ev} batchStatus={batchStatus} />
                           {isExpanded && ev?.result && (
-                            <div className="mt-3 space-y-3">
+                            <div className="mt-3 space-y-3 fade-up">
                               <VisualLimitationNotice />
                               <div className="border border-[#E2E8F0] rounded-md overflow-hidden bg-white">
                                 {ev.result.fields.map((fr, i) => (
@@ -535,61 +598,114 @@ export default function BatchVerifyPage() {
       )}
 
       {/* Actions */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3 sticky bottom-0 z-10">
         {batchStatus !== 'done' && uploads.length > 0 && (
-          <button
-            type="button"
-            onClick={handleVerifyBatch}
-            disabled={batchStatus === 'loading'}
-            className="btn-primary"
-          >
-            {batchStatus === 'loading' ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                Processing…
-                <span className="num text-white/85 text-xs ml-1">
-                  ({completed} of {uploads.length})
-                </span>
-              </>
-            ) : (
-              <>
-                Verify batch
-                <span className="num text-white/85 text-xs ml-1">
-                  ({uploads.length}{' '}
-                  {uploads.length === 1 ? 'label' : 'labels'})
-                </span>
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </>
-            )}
-          </button>
+          <div className="flex flex-wrap items-center gap-3 w-full">
+            <button
+              type="button"
+              onClick={handleVerifyBatch}
+              disabled={batchStatus === 'loading'}
+              className="btn-primary"
+            >
+              {batchStatus === 'loading' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+                  Processing…
+                  <span className="num text-white/85 text-xs ml-1">
+                    ({completed} of {uploads.length})
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4" aria-hidden strokeWidth={2.25} />
+                  Verify batch
+                  <span className="num text-white/85 text-xs ml-1">
+                    ({uploads.length}{' '}
+                    {uploads.length === 1 ? 'label' : 'labels'})
+                  </span>
+                  <ArrowRight className="h-4 w-4 ml-0.5" aria-hidden />
+                </>
+              )}
+            </button>
+            <p className="text-[12px] text-[#64748B] ml-auto sm:ml-0">
+              All labels run in parallel via SSE — results stream as each completes.
+            </p>
+          </div>
         )}
         {batchStatus === 'done' && (
-          <button type="button" onClick={newBatch} className="btn-ghost ml-auto">
-            <RefreshCw className="h-4 w-4" aria-hidden />
-            Start a new batch
-          </button>
+          <div className="flex items-center gap-3 w-full justify-between">
+            <p className="text-[13px] text-[#475569] inline-flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-[#16A34A]" aria-hidden />
+              Batch complete · review flagged rows, then start a new batch.
+            </p>
+            <button type="button" onClick={newBatch} className="btn-ghost">
+              <RefreshCw className="h-4 w-4" aria-hidden />
+              Start a new batch
+            </button>
+          </div>
         )}
       </div>
     </div>
   )
 }
 
-function BatchEmptyState() {
+function BatchEmptyState({
+  onSeedDemo,
+  seeding,
+}: {
+  onSeedDemo: () => void
+  seeding: boolean
+}) {
   return (
-    <div className="card p-8 flex flex-col items-center text-center gap-4">
-      <span className="h-14 w-14 rounded-full bg-[#EEF4FB] inline-flex items-center justify-center">
-        <Files className="h-7 w-7 text-[#1B4F8A]" aria-hidden strokeWidth={1.75} />
+    <div className="card relative overflow-hidden p-8 flex flex-col items-center text-center gap-4 fade-up">
+      <div
+        aria-hidden
+        className="absolute inset-0 grid-bg opacity-40 pointer-events-none"
+        style={{
+          maskImage:
+            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
+          WebkitMaskImage:
+            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
+        }}
+      />
+      <span className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-[#EEF4FB] to-[#DCE9F5] inline-flex items-center justify-center ring-1 ring-[#DCE9F5]">
+        <Files
+          className="h-7 w-7 text-[#1B4F8A]"
+          aria-hidden
+          strokeWidth={1.75}
+        />
       </span>
-      <div className="max-w-md">
-        <h3 className="text-base font-semibold text-[#0F172A]">
+      <div className="max-w-md relative">
+        <h3 className="text-[17px] font-semibold text-[#0F172A]">
           No labels queued yet
         </h3>
-        <p className="text-sm text-[#475569] mt-1.5 leading-relaxed">
-          Drop a stack of labels into the upload zone above. We&rsquo;ll generate one
-          inline form row per file. The whole batch runs in parallel with a
+        <p className="text-[13.5px] text-[#475569] mt-2 leading-relaxed">
+          Drop a stack of labels into the upload zone above. We&rsquo;ll generate
+          one inline form row per file. The whole batch runs in parallel with a
           5-second SLA per label.
         </p>
       </div>
+      <button
+        type="button"
+        onClick={onSeedDemo}
+        disabled={seeding}
+        className="btn-ghost relative"
+      >
+        {seeding ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+            Loading bundled labels…
+          </>
+        ) : (
+          <>
+            <Zap className="h-4 w-4" aria-hidden />
+            Seed demo batch (3 labels)
+          </>
+        )}
+      </button>
+      <p className="text-[11.5px] text-[#94A3B8] relative">
+        Demo batch contains one PASS, one ABV mismatch, and one degraded label.
+      </p>
     </div>
   )
 }
