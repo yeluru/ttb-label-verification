@@ -33,7 +33,7 @@ export default function LandingPage() {
           </h1>
           
           <p className="text-lg md:text-2xl text-[var(--color-text-secondary)] leading-relaxed max-w-3xl mx-auto font-light">
-            A secure, stateless architecture designed to instantly extract and cross-reference alcohol label artworks against submitted Form 5100.31 data using Claude 3.5 Sonnet.
+            A secure, stateless architecture designed to instantly extract and cross-reference alcohol label artworks against submitted Form 5100.31 data using Claude 3.5 Sonnet (Latest).
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-5 pt-8">
@@ -59,7 +59,7 @@ export default function LandingPage() {
               color: 'text-blue-600 dark:text-blue-400',
               bg: 'bg-blue-500/10',
               border: 'border-blue-500/20',
-              title: 'Claude 3.5 Sonnet',
+              title: 'Claude 3.5 Sonnet (Latest)',
               desc: 'State-of-the-art vision processing. Operates as a strict, zero-temperature OCR engine to extract verbatim text with granular confidence scoring.'
             },
             {
@@ -142,7 +142,7 @@ export default function LandingPage() {
             Powered by Modern Tooling
           </p>
           <div className="flex flex-wrap items-center justify-center gap-8 md:gap-16 opacity-60 hover:opacity-100 transition-opacity duration-500">
-            {['Next.js 14 App Router', 'Tailwind CSS', 'Claude 3.5 Sonnet', 'TypeScript', 'Serverless Run-times'].map((tech, i) => (
+            {['Next.js 14 App Router', 'Tailwind CSS', 'Claude 3.5 Sonnet (Latest)', 'TypeScript', 'Serverless Run-times'].map((tech, i) => (
               <span key={i} className="flex items-center gap-2 text-lg font-medium text-[var(--color-text)]">
                 <ArrowUpRight className="h-4 w-4 text-[var(--color-primary)] opacity-50" />
                 {tech}
