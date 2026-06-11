@@ -20,7 +20,7 @@ export function BeverageTypeSelector({
     <div
       role="radiogroup"
       aria-label="Beverage type"
-      className="grid grid-cols-3 gap-1 rounded-lg border border-[#E2E8F0] bg-[#F1F5F9] p-1"
+      className="grid grid-cols-3 gap-1 rounded-md border border-[#E2E8F0] bg-[#F1F5F9] p-1"
     >
       {OPTIONS.map((opt) => {
         const active = value === opt.value

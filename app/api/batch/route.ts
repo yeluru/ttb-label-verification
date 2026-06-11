@@ -4,9 +4,11 @@ import {
   BatchResultEvent,
   BatchSummary,
   BeverageType,
+  LabelFieldKey,
   LabelFormData,
   ProviderUnavailableError,
 } from '@/lib/types'
+import { isAcceptedFile, validateFormData } from '@/lib/validation'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -29,8 +31,43 @@ function errorMessageFor(err: unknown): string {
   return 'An unexpected error occurred while processing this label.'
 }
 
+async function runWithConcurrencyLimit<T>(
+  concurrencyLimit: number,
+  items: any[],
+  fn: (item: any, index: number) => Promise<T>,
+): Promise<T[]> {
+  const results: Promise<T>[] = []
+  const executing: Promise<any>[] = []
+
+  for (let i = 0; i < items.length; i++) {
+    const p = Promise.resolve().then(() => fn(items[i], i))
+    results.push(p)
+
+    if (concurrencyLimit < items.length) {
+      const e: Promise<any> = p.then(() => executing.splice(executing.indexOf(e), 1))
+      executing.push(e)
+      if (executing.length >= concurrencyLimit) {
+        await Promise.race(executing)
+      }
+    }
+  }
+
+  return Promise.all(results)
+}
+
 export async function POST(request: NextRequest) {
-  const formData = await request.formData()
+  let formData: FormData
+  try {
+    formData = await request.formData()
+  } catch {
+    return new Response(
+      JSON.stringify({
+        error: 'validation',
+        message: 'Unable to read the uploaded batch.',
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
   const beverageTypeRaw = formData.get('beverageType')
   const isImport = formData.get('isImport') === 'true'
 
@@ -49,7 +86,8 @@ export async function POST(request: NextRequest) {
   let formDataArray: LabelFormData[] = []
   try {
     const raw = formData.get('formData')
-    formDataArray = typeof raw === 'string' ? JSON.parse(raw) : []
+    const parsed = typeof raw === 'string' ? JSON.parse(raw) : []
+    formDataArray = Array.isArray(parsed) ? parsed : []
   } catch {
     return new Response(
       JSON.stringify({
@@ -71,6 +109,37 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const invalidFileIndex = files.findIndex((file) => !isAcceptedFile(file))
+  if (invalidFileIndex !== -1) {
+    return new Response(
+      JSON.stringify({
+        error: 'validation',
+        message: 'Unsupported file type. Please upload a JPG, PNG, or PDF.',
+        fields: [`files.${invalidFileIndex}`],
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
+  const rowValidationErrors: { index: number; fields: LabelFieldKey[] }[] = []
+  formDataArray.forEach((row, index) => {
+    const validation = validateFormData(beverageType, isImport, row ?? {})
+    if (!validation.ok) {
+      rowValidationErrors.push({ index, fields: validation.missing })
+    }
+  })
+
+  if (rowValidationErrors.length > 0) {
+    return new Response(
+      JSON.stringify({
+        error: 'validation',
+        message: 'Required fields are missing in one or more batch rows.',
+        rows: rowValidationErrors,
+      }),
+      { status: 400, headers: { 'Content-Type': 'application/json' } },
+    )
+  }
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (event: string, data: object) => {
@@ -84,7 +153,7 @@ export async function POST(request: NextRequest) {
       // Heartbeat to keep proxies from buffering
       send('open', { count: files.length })
 
-      const tasks = files.map(async (file, index) => {
+      const tasks = async (file: File, index: number) => {
         const t0 = Date.now()
         try {
           const formFields = formDataArray[index]
@@ -111,9 +180,10 @@ export async function POST(request: NextRequest) {
           send('error', event)
           return { ok: false as const, error: err }
         }
-      })
+      }
 
-      const settled = await Promise.allSettled(tasks)
+      // Concurrency limit of 3 to avoid Anthropic rate limit exhaustion and timeouts
+      const settled = await runWithConcurrencyLimit(3, files, tasks)
 
       const summary: BatchSummary = {
         total: files.length,
@@ -123,8 +193,8 @@ export async function POST(request: NextRequest) {
         errors: 0,
       }
       for (const s of settled) {
-        if (s.status === 'fulfilled' && s.value.ok && s.value.result) {
-          const o = s.value.result.overall
+        if (s.ok && s.result) {
+          const o = s.result.overall
           if (o === 'PASS') summary.pass++
           else if (o === 'FLAG') summary.flag++
           else summary.needsReview++

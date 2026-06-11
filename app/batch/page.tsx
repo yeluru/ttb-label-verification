@@ -77,9 +77,18 @@ export default function BatchVerifyPage() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set())
   const [rowErrors, setRowErrors] = useState<Record<string, Set<LabelFieldKey>>>({})
   const [seedingDemo, setSeedingDemo] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [batchError, setBatchError] = useState<string | null>(null)
 
   const addFiles = useCallback((files: File[]) => {
     const accepted = files.filter((f) => isAcceptedFile(f))
+    const rejected = files.length - accepted.length
+    setUploadError(
+      rejected > 0
+        ? `${rejected} unsupported file${rejected === 1 ? '' : 's'} skipped. Upload JPG, PNG, or PDF.`
+        : null,
+    )
+    if (accepted.length === 0) return
     const next: UploadedFile[] = accepted.map((f) => ({
       id: `${f.name}-${f.size}-${Math.random().toString(36).slice(2, 8)}`,
       file: f,
@@ -189,6 +198,8 @@ export default function BatchVerifyPage() {
     setSummary({ total: 0, pass: 0, flag: 0, needsReview: 0, errors: 0 })
     setCompleted(0)
     setBatchStatus('idle')
+    setBatchError(null)
+    setUploadError(null)
     setExpanded(new Set())
     setRowErrors({})
   }
@@ -217,6 +228,7 @@ export default function BatchVerifyPage() {
     if (!validateAll()) return
 
     setBatchStatus('loading')
+    setBatchError(null)
     setResults({})
     setSummary({
       total: uploads.length,
@@ -246,14 +258,30 @@ export default function BatchVerifyPage() {
       fd.append('formData', JSON.stringify(formDataArray))
 
       const res = await fetch('/api/batch', { method: 'POST', body: fd })
-      if (!res.ok || !res.body) throw new Error('Batch request failed')
+      if (!res.ok || !res.body) {
+        const body: {
+          message?: string
+          rows?: { index: number; fields: LabelFieldKey[] }[]
+        } = await res.json().catch(() => ({}))
+        if (Array.isArray(body.rows)) {
+          const nextErrors: Record<string, Set<LabelFieldKey>> = {}
+          for (const row of body.rows) {
+            const upload = uploads[row.index]
+            if (upload) nextErrors[upload.id] = new Set(row.fields)
+          }
+          setRowErrors(nextErrors)
+        }
+        setBatchError(body.message ?? 'Batch request failed')
+        setBatchStatus('idle')
+        return
+      }
 
       const reader = res.body.getReader()
       const decoder = new TextDecoder('utf-8')
       let buffer = ''
 
-      const idByFilename = new Map<string, string>()
-      prepared.forEach((p) => idByFilename.set(p.file.name, p.id))
+      const idByIndex = new Map<number, string>()
+      prepared.forEach((p, index) => idByIndex.set(index, p.id))
 
       while (true) {
         const { value, done } = await reader.read()
@@ -276,7 +304,7 @@ export default function BatchVerifyPage() {
             const data = JSON.parse(dataStr)
             if (eventName === 'result' || eventName === 'error') {
               const ev: BatchResultEvent = data
-              const id = idByFilename.get(ev.filename)
+              const id = idByIndex.get(ev.index)
               if (id) {
                 setResults((prev) => ({ ...prev, [id]: ev }))
                 setCompleted((c) => c + 1)
@@ -304,6 +332,11 @@ export default function BatchVerifyPage() {
       setBatchStatus('done')
     } catch (e) {
       console.error('Batch error', e)
+      setBatchError(
+        e instanceof Error
+          ? e.message
+          : 'An unexpected error occurred while processing the batch.',
+      )
       setBatchStatus('done')
     }
   }
@@ -346,50 +379,66 @@ export default function BatchVerifyPage() {
         }
       />
 
-      {/* Configuration */}
-      <section className="card p-5 fade-up" aria-labelledby="batch-config">
-        <h2 id="batch-config" className="sr-only">
-          Batch configuration
-        </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_320px] gap-5 lg:items-end">
-          <div>
-            <label className="eyebrow block mb-2">Beverage type</label>
-            <BeverageTypeSelector value={beverageType} onChange={setBeverageType} />
-          </div>
-          <label className="flex items-center gap-2.5 cursor-pointer group lg:pb-2.5">
-            <input
-              type="checkbox"
-              checked={isImport}
-              onChange={(e) => setIsImport(e.target.checked)}
-              className="h-4 w-4 rounded border-[#CBD5E1] text-[#1B4F8A] focus:ring-[#1B4F8A]/30"
+      <div
+        className={`grid grid-cols-1 gap-6 ${
+          showResults ? '' : 'xl:grid-cols-[minmax(0,1fr)_430px]'
+        }`}
+      >
+        {/* Configuration */}
+        <section className="card panel-accent p-5 pl-7 fade-up" aria-labelledby="batch-config">
+          <h2 id="batch-config" className="sr-only">
+            Batch configuration
+          </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] xl:grid-cols-1 gap-5">
+            <div>
+              <label className="eyebrow block mb-2">Beverage type</label>
+              <BeverageTypeSelector value={beverageType} onChange={setBeverageType} />
+            </div>
+            <label className="flex items-center gap-2.5 cursor-pointer group rounded-md border border-[#D8E2ED] bg-[#F8FAFC] px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={isImport}
+                onChange={(e) => setIsImport(e.target.checked)}
+                className="h-4 w-4 rounded border-[#CBD5E1] text-[#1B4F8A] focus:ring-[#1B4F8A]/30"
+              />
+              <span className="text-sm text-[#0F172A] group-hover:text-[#1B4F8A] transition-colors">
+                Imported product
+              </span>
+            </label>
+            <LoadSampleSelector
+              onLoad={handleLoadSample}
+              onInsertWarning={handleInsertWarning}
             />
-            <span className="text-sm text-[#0F172A] group-hover:text-[#1B4F8A] transition-colors">
-              Imported product
-            </span>
-          </label>
-          <LoadSampleSelector
-            onLoad={handleLoadSample}
-            onInsertWarning={handleInsertWarning}
-          />
-        </div>
-      </section>
-
-      {/* File upload */}
-      {!showResults && (
-        <section className="card p-5 fade-up" aria-label="Upload labels">
-          <FileDropZone
-            file={null}
-            onFile={(f) => f && addFiles([f])}
-            multiple
-            onFiles={addFiles}
-            helperHint={
-              uploads.length === 0
-                ? 'Or use the "Seed demo batch" button below for an instant 3-label demo.'
-                : undefined
-            }
-          />
+          </div>
         </section>
-      )}
+
+        {/* File upload */}
+        {!showResults && (
+          <section className="card panel-accent p-5 pl-7 fade-up" aria-label="Upload labels">
+            <div className="mb-4">
+              <div className="eyebrow text-[#1B4F8A]">Batch intake</div>
+              <h2 className="mt-1 text-[17px] font-semibold text-[#0F172A]">
+                Queue label artwork
+              </h2>
+              <p className="mt-1 text-[12.5px] text-[#64748B]">
+                Drop every label first, then complete one row per file.
+              </p>
+            </div>
+            <FileDropZone
+              file={null}
+              onFile={(f) => f && addFiles([f])}
+              multiple
+              onFiles={addFiles}
+              error={uploadError}
+              helperHint={
+                uploads.length === 0
+                  ? 'Or use the "Seed demo batch" button below for an instant 3-label demo.'
+                  : undefined
+              }
+            />
+          </section>
+        )}
+      </div>
 
       {/* Empty state with seed-demo affordance */}
       {uploads.length === 0 && !showResults && (
@@ -398,7 +447,16 @@ export default function BatchVerifyPage() {
 
       {/* Inline form table or results */}
       {uploads.length > 0 && (
-        <section className="card overflow-hidden fade-up">
+        <section className="card panel-accent overflow-hidden fade-up">
+          {batchError && (
+            <div
+              role="alert"
+              className="border-b border-[#FECACA] bg-[#FEF2F2] px-5 py-3 text-sm text-[#B91C1C] flex items-start gap-2"
+            >
+              <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
+              <span>{batchError}</span>
+            </div>
+          )}
           {/* Sticky summary header when results are showing */}
           {showResults && (
             <div
@@ -657,18 +715,8 @@ function BatchEmptyState({
   seeding: boolean
 }) {
   return (
-    <div className="card relative overflow-hidden p-8 flex flex-col items-center text-center gap-4 fade-up">
-      <div
-        aria-hidden
-        className="absolute inset-0 grid-bg opacity-40 pointer-events-none"
-        style={{
-          maskImage:
-            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
-          WebkitMaskImage:
-            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
-        }}
-      />
-      <span className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-[#EEF4FB] to-[#DCE9F5] inline-flex items-center justify-center ring-1 ring-[#DCE9F5]">
+    <div className="card panel-accent relative overflow-hidden p-8 flex flex-col items-center text-center gap-4 fade-up">
+      <span className="relative h-16 w-16 rounded-lg bg-[#EEF4FB] inline-flex items-center justify-center ring-1 ring-[#DCE9F5]">
         <Files
           className="h-7 w-7 text-[#1B4F8A]"
           aria-hidden

@@ -9,7 +9,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "generate-labels": "node scripts/generate-labels.mjs"
+    "generate-labels": "node scripts/generate-labels.mjs",
+    "test-latency": "node scripts/test-http-latency.mjs",
+    "test": "npx tsx scripts/test-logic.mjs",
+    "design-system": "python3 .agents/skills/ui-ux-pro-max/scripts/search.py 'ttb label verification alcohol compliance dashboard' --design-system -f markdown"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

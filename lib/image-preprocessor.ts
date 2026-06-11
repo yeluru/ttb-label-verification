@@ -10,7 +10,7 @@ import { MAX_IMAGE_DIMENSION_PX } from './field-comparison'
  */
 export async function resizeForVision(
   buffer: Buffer,
-): Promise<{ buffer: Buffer; mimeType: 'image/png' }> {
+): Promise<{ buffer: Buffer; mimeType: 'image/jpeg' }> {
   const image = sharp(buffer, { failOn: 'error' })
   const meta = await image.metadata()
   const longEdge = Math.max(meta.width ?? 0, meta.height ?? 0)
@@ -25,8 +25,8 @@ export async function resizeForVision(
     })
   }
 
-  const out = await pipeline.png({ compressionLevel: 6 }).toBuffer()
-  return { buffer: out, mimeType: 'image/png' }
+  const out = await pipeline.jpeg({ quality: 80 }).toBuffer()
+  return { buffer: out, mimeType: 'image/jpeg' }
 }
 
 export async function fileToBuffer(file: File): Promise<Buffer> {

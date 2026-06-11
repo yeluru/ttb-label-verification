@@ -18,31 +18,31 @@ const VARIANTS: Record<
   }
 > = {
   PASS: {
-    bg: 'bg-gradient-to-br from-[#F0FDF4] to-[#ECFDF3]',
+    bg: 'bg-[#F0FDF4]',
     text: 'text-[#15803D]',
     border: 'border-[#BBF7D0]',
     accent: 'bg-[#16A34A]',
     icon: CheckCircle2,
     headline: 'All fields match the submitted form',
-    glow: 'shadow-[0_4px_20px_-4px_rgb(22_163_74/0.15)]',
+    glow: 'shadow-sm',
   },
   FLAG: {
-    bg: 'bg-gradient-to-br from-[#FEF2F2] to-[#FEF1F1]',
+    bg: 'bg-[#FEF2F2]',
     text: 'text-[#B91C1C]',
     border: 'border-[#FECACA]',
     accent: 'bg-[#DC2626]',
     icon: XCircle,
     headline: 'One or more fields do not match',
-    glow: 'shadow-[0_4px_20px_-4px_rgb(220_38_38/0.15)]',
+    glow: 'shadow-sm',
   },
   'NEEDS REVIEW': {
-    bg: 'bg-gradient-to-br from-[#FFFBEB] to-[#FFF9E5]',
+    bg: 'bg-[#FFFBEB]',
     text: 'text-[#B45309]',
     border: 'border-[#FDE68A]',
     accent: 'bg-[#D97706]',
     icon: AlertTriangle,
     headline: 'AI uncertain on one or more fields',
-    glow: 'shadow-[0_4px_20px_-4px_rgb(217_119_6/0.15)]',
+    glow: 'shadow-sm',
   },
 }
 
@@ -58,7 +58,7 @@ export function OverallBadge({ result }: Props) {
     <div
       role="status"
       aria-live="polite"
-      className={`relative overflow-hidden rounded-xl border ${v.border} ${v.bg} ${v.glow} fade-up`}
+      className={`relative overflow-hidden rounded-lg border ${v.border} ${v.bg} ${v.glow} fade-up`}
     >
       <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${v.accent}`} />
       <div className="flex items-center gap-5 p-5 pl-6">

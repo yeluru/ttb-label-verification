@@ -19,8 +19,10 @@ export const TTB_STANDARD_WARNING_TEXT =
   '(2) Consumption of alcoholic beverages impairs your ability to drive a car or operate ' +
   'machinery, and may cause health problems.'
 
-// Anthropic recommended max image dimension for vision input.
-export const MAX_IMAGE_DIMENSION_PX = 1568
+// Anthropic recommended max image dimension for vision input (optimized from 1568 to 600 for speed).
+export const MAX_IMAGE_DIMENSION_PX = 600
+
+
 
 // Vercel function timeout budget per label call.
 export const LABEL_PROCESSING_TIMEOUT_MS = 8000
@@ -33,7 +35,7 @@ export function fuzzyNormalize(value: string): string {
   return value
     .toLowerCase()
     // Strip all punctuation except periods. Keep alphanumerics, periods, whitespace.
-    .replace(/[^\p{L}\p{N}.\s]/gu, ' ')
+    .replace(/[^\p{L}\p{N}.\s]/gu, '')
     // Collapse all whitespace runs to a single space.
     .replace(/\s+/g, ' ')
     .trim()
@@ -275,6 +277,13 @@ export function deriveOverall(results: FieldResult[]): OverallStatus {
 export function isUnreadable(extraction: ExtractionResult): boolean {
   const entries = Object.entries(extraction.fields ?? {})
   if (entries.length === 0) return true
+
+  // If the reason for low confidence is "AI response could not be parsed",
+  // it is a system/parsing error, not an unreadable image.
+  // So we should return false so that it returns 200 with needs-review fields.
+  const isParseError = entries.some(([, ex]) => ex?.reason === 'AI response could not be parsed')
+  if (isParseError) return false
+
   return entries.every(
     ([, ex]) => !ex || (ex.value === null && ex.confidence === 'low'),
   )

@@ -17,18 +17,18 @@
     --color-review: #D97706;
     --color-review-bg: #FFFBEB;
     --color-review-border: #FDE68A;
-    --color-background: #F6F8FB;
-    --color-background-alt: #EEF2F7;
+    --color-background: #EEF3F8;
+    --color-background-alt: #E3EAF2;
     --color-surface: #FFFFFF;
     --color-surface-elevated: #FFFFFF;
-    --color-border: #E2E8F0;
-    --color-border-strong: #CBD5E1;
+    --color-border: #D8E2ED;
+    --color-border-strong: #B9C8DA;
     --color-text: #0F172A;
     --color-text-secondary: #475569;
     --color-text-muted: #94A3B8;
-    --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.04), 0 1px 1px 0 rgb(15 23 42 / 0.03);
-    --shadow-card-hover: 0 4px 12px -2px rgb(15 23 42 / 0.06), 0 2px 4px -1px rgb(15 23 42 / 0.04);
-    --shadow-floating: 0 10px 24px -6px rgb(15 23 42 / 0.08), 0 4px 8px -2px rgb(15 23 42 / 0.04);
+    --shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 12px 28px -26px rgb(15 23 42 / 0.35);
+    --shadow-card-hover: 0 10px 24px -18px rgb(15 23 42 / 0.32);
+    --shadow-floating: 0 22px 44px -24px rgb(15 23 42 / 0.36);
   }
 
   html {
@@ -43,9 +43,7 @@
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     background-color: var(--color-background);
     background-image:
-      radial-gradient(circle at 0% 0%, rgb(27 79 138 / 0.04), transparent 40%),
-      radial-gradient(circle at 100% 0%, rgb(27 79 138 / 0.03), transparent 40%);
-    background-attachment: fixed;
+      linear-gradient(to bottom, #F8FAFC 0, #EEF3F8 240px, #EEF3F8 100%);
   }
 
   /* Selection */
@@ -80,18 +78,29 @@
   .card {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow: var(--shadow-card);
+  }
+  .panel-accent {
+    position: relative;
+    overflow: hidden;
+  }
+  .panel-accent::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--color-primary);
   }
   .card-quiet {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 10px;
+    border-radius: 8px;
   }
   .card-elevated {
     background: var(--color-surface);
     border: 1px solid var(--color-border);
-    border-radius: 12px;
+    border-radius: 8px;
     box-shadow: var(--shadow-floating);
   }
 
@@ -106,7 +115,7 @@
   .input-base {
     width: 100%;
     height: 40px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid var(--color-border);
     background: var(--color-surface);
     color: var(--color-text);
@@ -139,12 +148,12 @@
     gap: 8px;
     height: 44px;
     padding: 0 18px;
-    border-radius: 8px;
+    border-radius: 6px;
     background: var(--color-primary);
     color: #fff;
     font-size: 14px;
     font-weight: 600;
-    letter-spacing: 0.01em;
+    letter-spacing: 0;
     box-shadow:
       0 1px 2px 0 rgb(15 23 42 / 0.1),
       inset 0 1px 0 rgb(255 255 255 / 0.12),
@@ -177,7 +186,7 @@
     gap: 8px;
     height: 38px;
     padding: 0 14px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid var(--color-primary);
     color: var(--color-primary);
     background: var(--color-surface);
@@ -198,7 +207,7 @@
     gap: 8px;
     height: 36px;
     padding: 0 12px;
-    border-radius: 8px;
+    border-radius: 6px;
     border: 1px solid var(--color-border);
     color: var(--color-text-secondary);
     background: var(--color-surface);
@@ -240,9 +249,9 @@
 
   .grid-bg {
     background-image:
-      linear-gradient(to right, rgb(15 23 42 / 0.04) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(15 23 42 / 0.04) 1px, transparent 1px);
-    background-size: 24px 24px;
+      linear-gradient(to right, rgb(15 23 42 / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(15 23 42 / 0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }
 

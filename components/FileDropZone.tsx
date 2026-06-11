@@ -62,7 +62,7 @@ export function FileDropZone({
     const isPdf = /\.pdf$/i.test(file.name)
     return (
       <div className="space-y-2 fade-up">
-        <div className="group relative flex items-center gap-3 rounded-lg bg-[#F0FDF4] border border-[#BBF7D0] px-3 py-2.5">
+        <div className="group relative flex items-center gap-3 rounded-md bg-[#F0FDF4] border border-[#BBF7D0] px-3 py-2.5">
           <span className="h-10 w-10 rounded-md bg-white border border-[#BBF7D0] inline-flex items-center justify-center shrink-0">
             <Icon className="h-4.5 w-4.5 text-[#16A34A]" aria-hidden />
           </span>
@@ -108,17 +108,17 @@ export function FileDropZone({
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
-        className={`group w-full rounded-xl border-2 border-dashed flex flex-col items-center justify-center gap-3 px-4 py-7 transition-all duration-200 cursor-pointer text-center ${
+        className={`group w-full rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-3 px-4 py-7 transition-all duration-200 cursor-pointer text-center ${
           dragOver
-            ? 'border-[#1B4F8A] bg-[#EEF4FB] scale-[1.005] shadow-inner'
+            ? 'border-[#1B4F8A] bg-[#EEF4FB] shadow-inner'
             : error
               ? 'border-[#FECACA] bg-[#FEF2F2]/50 hover:bg-[#FEF2F2]'
               : 'border-[#CBD5E1] bg-white hover:border-[#1B4F8A] hover:bg-[#EEF4FB]/50'
         }`}
       >
         <span
-          className={`relative h-12 w-12 rounded-full inline-flex items-center justify-center transition-transform duration-200 ${
-            dragOver ? 'bg-[#1B4F8A] scale-110' : 'bg-[#EEF4FB] group-hover:scale-105'
+          className={`relative h-12 w-12 rounded-md inline-flex items-center justify-center transition-colors duration-200 ${
+            dragOver ? 'bg-[#1B4F8A]' : 'bg-[#EEF4FB]'
           }`}
         >
           <Upload

@@ -55,10 +55,11 @@ In the browser:
 ### Without an API key
 
 If `ANTHROPIC_API_KEY` is missing, the server falls back to a
-`MockProvider` that mirrors the form data back as the "extracted"
-values. You can click through the UI and see every state, but the
-mock cannot read the actual image — every test case will look like
-PASS. Set a real key to exercise FLAG / NEEDS REVIEW paths.
+`MockProvider` that returns canned extraction values. You can click
+through the UI and verify the app shell without spending tokens, but
+the mock cannot read the actual image and does not prove OCR accuracy.
+Set a real key to exercise the FLAG / NEEDS REVIEW paths against the
+bundled labels.
 
 ---
 
@@ -83,10 +84,9 @@ npm run build && npm start
 ### Without an API key
 
 If `ANTHROPIC_API_KEY` is not set, the app falls back to a `MockProvider` that
-mirrors the form data back as the "extracted" values. This lets you click
-through the UI without spending tokens, but it does *not* actually read the
-image — every test case will appear to pass. Set the key to see real
-extraction.
+returns canned extraction values. This lets you click through the UI without
+spending tokens, but it does *not* actually read the image. Set the key to see
+real extraction.
 
 ### Optional — regenerate test labels
 
@@ -163,7 +163,7 @@ aggregate counts. One failure never blocks the rest.
 | TypeScript (strict mode) | Type safety, especially across the comparison + AI parsing layer |
 | Tailwind CSS 3 | Utility-first styling — government-appropriate Enterprise Minimal theme |
 | Lucide React | Icon set — used for status indicators (CheckCircle2 / XCircle / HelpCircle) |
-| Anthropic SDK | Calls `claude-3-5-sonnet-20241022` with vision input + structured JSON output |
+| Anthropic SDK | Calls `ANTHROPIC_MODEL` (`claude-sonnet-4-6` by default) with vision input + structured JSON output |
 | sharp | Server-side resize of label images to ≤ 1568px on the long edge |
 | pdfjs-dist | **Client-side** PDF page-1 → PNG rasterization (server can't run canvas natives on Vercel) |
 | Puppeteer | Build-time only — rasterizes the HTML test labels to JPG so the repo carries the test set |
@@ -206,11 +206,10 @@ aggregate counts. One failure never blocks the rest.
 - **No COLA IT integration.** Form data is entered by hand or via the
   "Load Sample" dropdown. A future integration could pull form data directly
   given a COLA application ID.
-- **MockProvider always passes.** When no API key is present, the mock
-  provider returns the same value the form submitted. This is useful for
-  clicking through the UI but it does *not* exercise real OCR — every test
-  case will look like PASS. Use a real key to validate FLAG and NEEDS REVIEW
-  behavior.
+- **MockProvider uses canned values.** When no API key is present, the mock
+  provider returns representative extraction text. This is useful for clicking
+  through the UI but it does *not* exercise real OCR or all mismatch scenarios.
+  Use a real key to validate FLAG and NEEDS REVIEW behavior.
 - **No automated test suite.** PRD Section 9's 27 manual test cases are the
   acceptance criteria. The pure functions in `lib/field-comparison.ts` are the
   highest-value candidates for unit tests if this moves past prototype.

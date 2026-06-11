@@ -4,8 +4,6 @@ import { useRef, useState } from 'react'
 import {
   AlertCircle,
   ArrowRight,
-  CheckCircle2,
-  ChevronRight,
   FileSearch,
   Loader2,
   Lock,
@@ -153,7 +151,9 @@ export default function SingleVerifyPage() {
   }
 
   const formValid =
-    file !== null && validateFormData(beverageType, isImport, formData).ok
+    file !== null &&
+    isAcceptedFile(file) &&
+    validateFormData(beverageType, isImport, formData).ok
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 py-6 lg:py-10">
@@ -178,37 +178,17 @@ export default function SingleVerifyPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[460px_1fr] gap-6 items-start">
-        {/* LEFT — Form */}
+      <div className="grid grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)] xl:grid-cols-[360px_440px_minmax(0,1fr)] gap-6 items-stretch">
+        {/* LEFT — Setup */}
         <section
-          className="card p-6 space-y-7 fade-up"
-          aria-labelledby="form-heading"
+          className="card panel-accent h-full min-h-[760px] p-6 pl-7 space-y-7 fade-up"
+          aria-label="Verification setup"
         >
-          <h2 id="form-heading" className="sr-only">
-            Application form
-          </h2>
-
-          <FormSection number={1} title="Configuration" subtitle="Beverage type, import status, and quick start">
+          <FormSection number={1} title="Setup" subtitle="Beverage type and test data">
             <div>
               <label className="eyebrow block mb-2">Beverage type</label>
               <BeverageTypeSelector value={beverageType} onChange={setBeverageType} />
             </div>
-            <label className="flex items-start gap-3 cursor-pointer group rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#EEF4FB] hover:border-[#1B4F8A]/30 transition-all px-3 py-2.5">
-              <input
-                type="checkbox"
-                checked={isImport}
-                onChange={(e) => setIsImport(e.target.checked)}
-                className="h-4 w-4 mt-0.5 rounded border-[#CBD5E1] text-[#1B4F8A] focus:ring-[#1B4F8A]/30"
-              />
-              <span className="flex-1">
-                <span className="text-sm font-medium text-[#0F172A] block">
-                  Imported product
-                </span>
-                <span className="text-xs text-[#64748B] mt-0.5 block">
-                  Adds Country of Origin to the form and the AI extraction.
-                </span>
-              </span>
-            </label>
             <LoadSampleSelector
               onLoad={handleLoadSample}
               onInsertWarning={handleInsertWarning}
@@ -226,11 +206,49 @@ export default function SingleVerifyPage() {
             <FileDropZone file={file} onFile={handleFile} error={fileError} />
           </FormSection>
 
+          <div className="rounded-md bg-[#F8FAFC] border border-[#D8E2ED] p-3">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[#64748B]">
+              Review path
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-1 text-center">
+              <StepStatus label="Setup" active />
+              <StepStatus label="Form" active={validateFormData(beverageType, isImport, formData).ok} />
+              <StepStatus label="Result" active={status === 'done'} />
+            </div>
+          </div>
+
+        </section>
+
+        {/* MIDDLE — Form data */}
+        <section
+          className="card panel-accent h-full min-h-[760px] p-6 pl-7 fade-up"
+          aria-labelledby="form-heading"
+        >
+          <h2 id="form-heading" className="sr-only">
+            Application form data
+          </h2>
+
           <FormSection
             number={3}
             title="Application form data"
             subtitle="Enter the values exactly as filed in COLA"
           >
+            <label className="flex items-start gap-3 cursor-pointer group rounded-md border border-[#E2E8F0] bg-[#F8FAFC] hover:bg-[#EEF4FB] hover:border-[#1B4F8A]/30 transition-colors px-3 py-2.5">
+              <input
+                type="checkbox"
+                checked={isImport}
+                onChange={(e) => setIsImport(e.target.checked)}
+                className="h-4 w-4 mt-0.5 rounded border-[#CBD5E1] text-[#1B4F8A] focus:ring-[#1B4F8A]/30"
+              />
+              <span className="flex-1">
+                <span className="text-sm font-medium text-[#0F172A] block">
+                  Imported product
+                </span>
+                <span className="text-xs text-[#64748B] mt-0.5 block">
+                  Adds Country of Origin to this form and the AI extraction.
+                </span>
+              </span>
+            </label>
             <LabelFormFields
               beverageType={beverageType}
               isImport={isImport}
@@ -240,38 +258,11 @@ export default function SingleVerifyPage() {
               warningTextareaRef={warningRef}
             />
           </FormSection>
-
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={handleVerify}
-              disabled={status === 'loading' || !formValid}
-              className="btn-primary w-full"
-            >
-              {status === 'loading' ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-                  Verifying label…
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" aria-hidden strokeWidth={2.25} />
-                  Verify label
-                  <ArrowRight className="h-4 w-4 ml-0.5" aria-hidden />
-                </>
-              )}
-            </button>
-            {!formValid && status !== 'loading' && (
-              <p className="text-[11.5px] text-[#94A3B8] text-center">
-                Complete all required fields and upload a label to verify.
-              </p>
-            )}
-          </div>
         </section>
 
         {/* RIGHT — Result */}
         <section
-          className="min-w-0"
+          className="min-w-0 h-full lg:col-span-2 xl:col-span-1"
           aria-labelledby="result-heading"
           aria-live="polite"
         >
@@ -279,9 +270,22 @@ export default function SingleVerifyPage() {
             Verification result
           </h2>
 
-          {status === 'idle' && <IdleState />}
+          {status === 'idle' && (
+            <ResultShell
+              formValid={formValid}
+              status={status}
+              onVerify={handleVerify}
+            >
+              <IdleState />
+            </ResultShell>
+          )}
           {status === 'loading' && (
-            <div className="space-y-4 fade-up">
+            <ResultShell
+              formValid={formValid}
+              status={status}
+              onVerify={handleVerify}
+            >
+              <div className="space-y-4 fade-up">
               <div className="card p-5 flex items-center gap-4">
                 <div className="relative h-10 w-10 shrink-0">
                   <Loader2
@@ -300,37 +304,41 @@ export default function SingleVerifyPage() {
                 </div>
               </div>
               <ResultSkeleton />
-            </div>
+              </div>
+            </ResultShell>
           )}
           {status === 'error' && (
-            <div
-              role="alert"
-              className="card p-8 flex flex-col items-center justify-center text-center min-h-[320px] gap-4 fade-up"
+            <ResultShell
+              formValid={formValid}
+              status={status}
+              onVerify={handleVerify}
             >
-              <span className="h-14 w-14 rounded-full bg-[#FEF2F2] inline-flex items-center justify-center">
-                <AlertCircle className="h-7 w-7 text-[#DC2626]" aria-hidden />
-              </span>
-              <div className="max-w-md">
-                <div className="text-[16px] font-semibold text-[#0F172A]">
-                  {errorMessage ?? 'An unexpected error occurred.'}
-                </div>
-                <div className="text-[13px] text-[#475569] mt-1.5 leading-relaxed">
-                  Your form data is preserved. Adjust your input or try again
-                  in a moment.
+              <div
+                role="alert"
+                className="p-8 flex flex-col items-center justify-center text-center min-h-[320px] gap-4 fade-up"
+              >
+                <span className="h-14 w-14 rounded-full bg-[#FEF2F2] inline-flex items-center justify-center">
+                  <AlertCircle className="h-7 w-7 text-[#DC2626]" aria-hidden />
+                </span>
+                <div className="max-w-md">
+                  <div className="text-[16px] font-semibold text-[#0F172A]">
+                    {errorMessage ?? 'An unexpected error occurred.'}
+                  </div>
+                  <div className="text-[13px] text-[#475569] mt-1.5 leading-relaxed">
+                    Your form data is preserved. Adjust your input or try again
+                    in a moment.
+                  </div>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setStatus('idle')}
-                className="btn-ghost"
-              >
-                <RotateCw className="h-4 w-4" aria-hidden />
-                Dismiss
-              </button>
-            </div>
+            </ResultShell>
           )}
           {status === 'done' && result && (
-            <div className="space-y-4 fade-up">
+            <ResultShell
+              formValid={formValid}
+              status={status}
+              onVerify={handleVerify}
+            >
+              <div className="space-y-4 fade-up">
               <OverallBadge result={result} />
               <VisualLimitationNotice />
               <div className="card overflow-hidden">
@@ -367,7 +375,8 @@ export default function SingleVerifyPage() {
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </button>
               </div>
-            </div>
+              </div>
+            </ResultShell>
           )}
         </section>
       </div>
@@ -411,21 +420,86 @@ function FormSection({
   )
 }
 
+function StepStatus({ label, active }: { label: string; active: boolean }) {
+  return (
+    <div
+      className={`rounded-md border px-2 py-2 text-[11px] font-semibold ${
+        active
+          ? 'bg-[#EEF4FB] border-[#DCE9F5] text-[#1B4F8A]'
+          : 'bg-white border-[#E2E8F0] text-[#94A3B8]'
+      }`}
+    >
+      {label}
+    </div>
+  )
+}
+
+function ResultShell({
+  children,
+  formValid,
+  status,
+  onVerify,
+}: {
+  children: React.ReactNode
+  formValid: boolean
+  status: UIStatus
+  onVerify: () => void
+}) {
+  const isLoading = status === 'loading'
+  const label =
+    status === 'error'
+      ? 'Retry verification'
+      : status === 'done'
+        ? 'Run verification again'
+        : 'Verify label'
+
+  return (
+    <div className="card panel-accent h-full min-h-[760px] flex flex-col">
+      <div className="flex-1 p-6">{children}</div>
+      <div className="border-t border-[#D8E2ED] bg-[#F8FAFC] p-4">
+        <button
+          type="button"
+          onClick={onVerify}
+          disabled={isLoading || !formValid}
+          className="btn-primary w-full"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+              Verifying label…
+            </>
+          ) : (
+            <>
+              {status === 'error' ? (
+                <RotateCw className="h-4 w-4" aria-hidden />
+              ) : (
+                <Play className="h-4 w-4" aria-hidden strokeWidth={2.25} />
+              )}
+              {label}
+              <ArrowRight className="h-4 w-4 ml-0.5" aria-hidden />
+            </>
+          )}
+        </button>
+        {!formValid && !isLoading && (
+          <p className="text-[11.5px] text-[#94A3B8] text-center mt-2">
+            Complete all required fields and upload a label to verify.
+          </p>
+        )}
+        {status === 'error' && formValid && (
+          <p className="text-[11.5px] text-[#64748B] text-center mt-2">
+            The previous attempt failed before comparison. Your entries are still here.
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function IdleState() {
   return (
-    <div className="card relative overflow-hidden p-10 flex flex-col items-center justify-center text-center min-h-[480px] gap-5 fade-up">
-      <div
-        aria-hidden
-        className="absolute inset-0 grid-bg opacity-40 pointer-events-none"
-        style={{
-          maskImage:
-            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
-          WebkitMaskImage:
-            'radial-gradient(ellipse at center, black 0%, transparent 70%)',
-        }}
-      />
+    <div className="relative overflow-hidden p-4 flex flex-col items-center justify-center text-center min-h-[520px] gap-5 fade-up">
       <div className="relative">
-        <span className="h-20 w-20 rounded-2xl bg-gradient-to-br from-[#EEF4FB] to-[#DCE9F5] inline-flex items-center justify-center ring-1 ring-[#DCE9F5]">
+        <span className="h-20 w-20 rounded-lg bg-[#EEF4FB] inline-flex items-center justify-center ring-1 ring-[#DCE9F5]">
           <FileSearch
             className="h-9 w-9 text-[#1B4F8A]"
             aria-hidden

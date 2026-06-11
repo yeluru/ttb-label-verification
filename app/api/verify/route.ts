@@ -100,6 +100,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result)
   } catch (err: unknown) {
     if (err instanceof ProviderUnavailableError) {
+      console.error('[/api/verify] provider unavailable', err.message)
       return NextResponse.json(
         {
           error: 'unavailable',
@@ -167,6 +168,8 @@ export async function processSingleLabel(
     beverageType,
     importedProduct: isImport,
     fieldList,
+    filename: file.name,
+    submittedFields,
   }
 
   // 4. Run AI extraction

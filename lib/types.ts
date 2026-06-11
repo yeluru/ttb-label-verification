@@ -117,6 +117,8 @@ export interface ExtractionInput {
   beverageType: BeverageType
   importedProduct: boolean
   fieldList: FieldConfig[]
+  filename?: string
+  submittedFields?: Partial<LabelFormData>
 }
 
 export class ProviderUnavailableError extends Error {

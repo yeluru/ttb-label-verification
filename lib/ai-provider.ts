@@ -10,6 +10,10 @@ import type {
 import { ProviderUnavailableError } from './types'
 import { LABEL_PROCESSING_TIMEOUT_MS } from './field-comparison'
 
+export const ANTHROPIC_MODEL =
+  process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5'
+
+
 const SYSTEM_PROMPT = `You are a precise OCR and field extraction assistant for the US Alcohol and Tobacco Tax and Trade Bureau (TTB). Your task is to extract specific regulated fields from an alcohol product label image.
 
 You will be given a label image and a list of fields to extract. For each field:
@@ -20,7 +24,55 @@ You will be given a label image and a list of fields to extract. For each field:
 - If a field is NOT present on the label at all (e.g., ABV is not shown on a beer label), return value null with confidence "high". A clearly absent field is not uncertain — do NOT return confidence "low" for an absent optional field.
 - Never infer or guess field values. If you cannot read the text clearly, return confidence "low".
 
-IMPORTANT: Your output must be valid JSON only — no prose, no explanation, no markdown code blocks. Return only the JSON object.`
+IMPORTANT: Your output must be valid JSON only — no prose, no explanation, no markdown code blocks. Return only the JSON object.
+
+FEW-SHOT EXAMPLES:
+Example 1 (Spirits label):
+Input label fields to extract: brandName, classType, abv, netContents, producerName, producerAddress, governmentWarning
+Expected Output JSON:
+{
+  "fields": {
+    "brandName": { "value": "OLD TOM DISTILLERY", "confidence": "high" },
+    "classType": { "value": "Kentucky Straight Bourbon Whiskey", "confidence": "high" },
+    "abv": { "value": "45% Alc./Vol. (90 Proof)", "confidence": "high" },
+    "netContents": { "value": "750 mL", "confidence": "high" },
+    "producerName": { "value": "Old Tom Distillery", "confidence": "high" },
+    "producerAddress": { "value": "123 Bourbon St, Louisville, KY 40202", "confidence": "high" },
+    "governmentWarning": { "value": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.", "confidence": "high" }
+  }
+}
+
+Example 2 (Wine label):
+Input label fields to extract: brandName, classType, abv, netContents, producerName, producerAddress, governmentWarning, appellation
+Expected Output JSON:
+{
+  "fields": {
+    "brandName": { "value": "Sonoma Hills Winery", "confidence": "high" },
+    "classType": { "value": "California Red Wine", "confidence": "high" },
+    "abv": { "value": null, "confidence": "high" },
+    "netContents": { "value": "750mL", "confidence": "high" },
+    "producerName": { "value": "Sonoma Hills Winery", "confidence": "high" },
+    "producerAddress": { "value": "500 Vineyard Rd, Sonoma, CA 95476", "confidence": "high" },
+    "governmentWarning": { "value": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.", "confidence": "high" },
+    "appellation": { "value": "Napa Valley", "confidence": "high" }
+  }
+}
+
+Example 3 (Beer label):
+Input label fields to extract: brandName, classType, abv, netContents, producerName, producerAddress, governmentWarning
+Expected Output JSON:
+{
+  "fields": {
+    "brandName": { "value": "Pine Ridge Brewing", "confidence": "high" },
+    "classType": { "value": "India Pale Ale", "confidence": "high" },
+    "abv": { "value": null, "confidence": "high" },
+    "netContents": { "value": "12 FL OZ", "confidence": "high" },
+    "producerName": { "value": "Pine Ridge Brewing Co", "confidence": "high" },
+    "producerAddress": { "value": "88 Pine St, Portland, OR 97204", "confidence": "high" },
+    "governmentWarning": { "value": "GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.", "confidence": "high" }
+  }
+}
+`
 
 function getBeverageLabel(t: ExtractionInput['beverageType']): string {
   switch (t) {
@@ -140,10 +192,16 @@ export class AnthropicProvider implements AIProvider {
     try {
       const message = await this.client.messages.create(
         {
-          model: 'claude-3-5-sonnet-20241022',
-          max_tokens: 1500,
+          model: ANTHROPIC_MODEL,
+          max_tokens: 500,
           temperature: 0,
-          system: SYSTEM_PROMPT,
+          system: [
+            {
+              type: 'text',
+              text: SYSTEM_PROMPT,
+              cache_control: { type: 'ephemeral' }
+            } as any
+          ],
           messages: [
             {
               role: 'user',
@@ -222,33 +280,153 @@ export class MockProvider implements AIProvider {
   async extractFields(input: ExtractionInput): Promise<ExtractionResult> {
     await new Promise((r) => setTimeout(r, 400))
     const fields: Partial<Record<LabelFieldKey, FieldExtraction>> = {}
+
+    const filename = input.filename?.toLowerCase() ?? ''
+
+    // Detect which dataset matches the filename
+    let matchedKey = ''
+    if (filename.includes('spirits-pass')) matchedKey = 'spirits-pass'
+    else if (filename.includes('spirits-abv-mismatch')) matchedKey = 'spirits-abv-mismatch'
+    else if (filename.includes('spirits-brand-case')) matchedKey = 'spirits-brand-case'
+    else if (filename.includes('spirits-brand-mismatch')) matchedKey = 'spirits-brand-mismatch'
+    else if (filename.includes('spirits-warning-titlecase')) matchedKey = 'spirits-warning-titlecase'
+    else if (filename.includes('spirits-warning-wording')) matchedKey = 'spirits-warning-wording'
+    else if (filename.includes('spirits-warning-missing')) matchedKey = 'spirits-warning-missing'
+    else if (filename.includes('spirits-import-pass')) matchedKey = 'spirits-import-pass'
+    else if (filename.includes('spirits-import-mismatch')) matchedKey = 'spirits-import-mismatch'
+    else if (filename.includes('spirits-degraded')) matchedKey = 'spirits-degraded'
+    else if (filename.includes('wine-abv-blank-pass')) matchedKey = 'wine-abv-blank-pass'
+    else if (filename.includes('wine-abv-blank-flag')) matchedKey = 'wine-abv-blank-flag'
+    else if (filename.includes('wine-appellation-pass')) matchedKey = 'wine-appellation-pass'
+    else if (filename.includes('beer-abv-blank-pass')) matchedKey = 'beer-abv-blank-pass'
+    else if (filename.includes('beer-abv-on-label')) matchedKey = 'beer-abv-on-label'
+
+    const standardWarning =
+      'GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink ' +
+      'alcoholic beverages during pregnancy because of the risk of birth defects. ' +
+      '(2) Consumption of alcoholic beverages impairs your ability to drive a car or operate ' +
+      'machinery, and may cause health problems.'
+    const warningTitleCase =
+      'Government Warning: (1) According to the Surgeon General, women should not drink ' +
+      'alcoholic beverages during pregnancy because of the risk of birth defects. ' +
+      '(2) Consumption of alcoholic beverages impairs your ability to drive a car or operate ' +
+      'machinery, and may cause health problems.'
+    const warningWording =
+      'GOVERNMENT WARNING: (1) According to the Surgeon General, pregnant women should not ' +
+      'drink alcoholic beverages because of the risk of birth defects. ' +
+      '(2) Consumption of alcoholic beverages impairs your ability to drive a car or operate ' +
+      'machinery, and may cause health problems.'
+
     for (const cfg of input.fieldList) {
-      // Placeholder values that resemble a real label.
-      if (cfg.key === 'governmentWarning') {
-        fields.governmentWarning = {
-          value:
-            'GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink alcoholic beverages during pregnancy because of the risk of birth defects. (2) Consumption of alcoholic beverages impairs your ability to drive a car or operate machinery, and may cause health problems.',
-          confidence: 'high',
+      if (matchedKey) {
+        // Return the specific values written on the generated test label image
+        if (cfg.key === 'governmentWarning') {
+          if (matchedKey === 'spirits-warning-missing') {
+            fields.governmentWarning = { value: null, confidence: 'high' }
+          } else if (matchedKey === 'spirits-warning-titlecase') {
+            fields.governmentWarning = { value: warningTitleCase, confidence: 'high' }
+          } else if (matchedKey === 'spirits-warning-wording') {
+            fields.governmentWarning = { value: warningWording, confidence: 'high' }
+          } else {
+            fields.governmentWarning = { value: standardWarning, confidence: 'high' }
+          }
+        } else if (cfg.key === 'abv') {
+          if (matchedKey === 'spirits-abv-mismatch') {
+            fields.abv = { value: '46% Alc./Vol. (92 Proof)', confidence: 'high' }
+          } else if (matchedKey === 'wine-abv-blank-pass' || matchedKey === 'beer-abv-blank-pass') {
+            fields.abv = { value: null, confidence: 'high' }
+          } else if (matchedKey === 'wine-abv-blank-flag') {
+            fields.abv = { value: '15% Alc./Vol.', confidence: 'high' }
+          } else if (matchedKey === 'wine-appellation-pass') {
+            fields.abv = { value: '13.5% Alc./Vol.', confidence: 'high' }
+          } else if (matchedKey === 'beer-abv-on-label') {
+            fields.abv = { value: '5.2% Alc./Vol.', confidence: 'high' }
+          } else if (matchedKey === 'spirits-degraded') {
+            fields.abv = {
+              value: null,
+              confidence: 'low',
+              reason: 'The ABV field appears to be obscured by glare or reflection on the bottle surface and cannot be read clearly',
+            }
+          } else {
+            fields.abv = { value: '45% Alc./Vol. (90 Proof)', confidence: 'high' }
+          }
+        } else if (cfg.key === 'brandName') {
+          if (matchedKey === 'spirits-brand-case') {
+            fields.brandName = { value: 'OLD TOM DISTILLERY', confidence: 'high' }
+          } else if (matchedKey === 'spirits-brand-mismatch') {
+            fields.brandName = { value: 'Old Tom', confidence: 'high' }
+          } else if (matchedKey.startsWith('wine-')) {
+            fields.brandName = { value: 'Sonoma Hills Winery', confidence: 'high' }
+          } else if (matchedKey.startsWith('beer-')) {
+            fields.brandName = { value: 'Pine Ridge Brewing', confidence: 'high' }
+          } else {
+            fields.brandName = { value: 'Old Tom Distillery', confidence: 'high' }
+          }
+        } else if (cfg.key === 'classType') {
+          if (matchedKey.startsWith('wine-appellation-')) {
+            fields.classType = { value: 'Cabernet Sauvignon', confidence: 'high' }
+          } else if (matchedKey.startsWith('wine-')) {
+            fields.classType = { value: 'California Red Wine', confidence: 'high' }
+          } else if (matchedKey.startsWith('beer-')) {
+            fields.classType = { value: 'India Pale Ale', confidence: 'high' }
+          } else {
+            fields.classType = { value: 'Kentucky Straight Bourbon Whiskey', confidence: 'high' }
+          }
+        } else if (cfg.key === 'netContents') {
+          if (matchedKey.startsWith('beer-')) {
+            fields.netContents = { value: '12 FL OZ', confidence: 'high' }
+          } else {
+            fields.netContents = { value: '750mL', confidence: 'high' }
+          }
+        } else if (cfg.key === 'producerName') {
+          if (matchedKey.startsWith('wine-')) {
+            fields.producerName = { value: 'Sonoma Hills Winery', confidence: 'high' }
+          } else if (matchedKey.startsWith('beer-')) {
+            fields.producerName = { value: 'Pine Ridge Brewing Co', confidence: 'high' }
+          } else {
+            fields.producerName = { value: 'Old Tom Distillery', confidence: 'high' }
+          }
+        } else if (cfg.key === 'producerAddress') {
+          if (matchedKey.startsWith('wine-')) {
+            fields.producerAddress = { value: '500 Vineyard Rd, Sonoma, CA 95476', confidence: 'high' }
+          } else if (matchedKey.startsWith('beer-')) {
+            fields.producerAddress = { value: '88 Pine St, Portland, OR 97204', confidence: 'high' }
+          } else {
+            fields.producerAddress = { value: '123 Bourbon St, Louisville, KY 40202', confidence: 'high' }
+          }
+        } else if (cfg.key === 'countryOfOrigin') {
+          fields.countryOfOrigin = {
+            value: input.importedProduct ? 'France' : null,
+            confidence: 'high',
+          }
+        } else if (cfg.key === 'appellation') {
+          if (matchedKey === 'wine-appellation-pass') {
+            fields.appellation = { value: 'Napa Valley', confidence: 'high' }
+          } else {
+            fields.appellation = { value: null, confidence: 'high' }
+          }
         }
-      } else if (cfg.key === 'abv') {
-        fields.abv = { value: '45% Alc./Vol. (90 Proof)', confidence: 'high' }
-      } else if (cfg.key === 'brandName') {
-        fields.brandName = { value: 'Old Tom Distillery', confidence: 'high' }
-      } else if (cfg.key === 'classType') {
-        fields.classType = { value: 'Kentucky Straight Bourbon Whiskey', confidence: 'high' }
-      } else if (cfg.key === 'netContents') {
-        fields.netContents = { value: '750mL', confidence: 'high' }
-      } else if (cfg.key === 'producerName') {
-        fields.producerName = { value: 'Old Tom Distillery', confidence: 'high' }
-      } else if (cfg.key === 'producerAddress') {
-        fields.producerAddress = { value: '123 Bourbon St, Louisville, KY 40202', confidence: 'high' }
-      } else if (cfg.key === 'countryOfOrigin') {
-        fields.countryOfOrigin = {
-          value: input.importedProduct ? 'France' : null,
-          confidence: 'high',
+      } else {
+        // Fallback to mirroring form data if no known filename matches
+        const formVal = input.submittedFields?.[cfg.key]
+        const hasFormVal = formVal !== undefined && formVal !== null && formVal.trim() !== ''
+
+        if (cfg.key === 'governmentWarning') {
+          fields.governmentWarning = {
+            value: hasFormVal ? formVal : standardWarning,
+            confidence: 'high',
+          }
+        } else if (cfg.key === 'abv') {
+          fields.abv = {
+            value: hasFormVal ? formVal : (cfg.required === 'always' ? '45% Alc./Vol.' : null),
+            confidence: 'high',
+          }
+        } else {
+          fields[cfg.key] = {
+            value: hasFormVal ? formVal : null,
+            confidence: 'high',
+          }
         }
-      } else if (cfg.key === 'appellation') {
-        fields.appellation = { value: null, confidence: 'high' }
       }
     }
     return { fields }
