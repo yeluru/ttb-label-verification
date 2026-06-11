@@ -11,7 +11,7 @@ import { ProviderUnavailableError } from './types'
 import { LABEL_PROCESSING_TIMEOUT_MS } from './field-comparison'
 
 export const ANTHROPIC_MODEL =
-  process.env.ANTHROPIC_MODEL || 'claude-3-5-sonnet-latest'
+  process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5'
 
 
 const SYSTEM_PROMPT = `You are a precise OCR and field extraction assistant for the US Alcohol and Tobacco Tax and Trade Bureau (TTB). Your task is to extract specific regulated fields from an alcohol product label image.

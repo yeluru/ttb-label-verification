@@ -27,7 +27,7 @@ Set:
 
 ```bash
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
-ANTHROPIC_MODEL=claude-3-5-sonnet-latest
+ANTHROPIC_MODEL=claude-haiku-4-5
 ```
 
 Restart the dev server after changing environment variables.

@@ -25,7 +25,7 @@
                     ┌──────────────────────────────────────┐
                     │   AGENT 1: LabelFieldExtractionAgent │
                     │                                      │
-                    │   Model: claude-3-5-sonnet-latest    │
+                    │   Model: claude-3-5-haiku-latest     │
                     │   Vision + structured JSON output    │
                     │   Temperature: 0                     │
                     └──────────────┬───────────────────────┘
@@ -111,7 +111,7 @@ interface FieldExtraction {
 
 | Parameter | Value | Reason |
 |-----------|-------|--------|
-| Model | `claude-3-5-sonnet-latest` | Best structured JSON output from vision at the latency required |
+| Model | `claude-3-5-haiku-latest` | Best structured JSON output from vision at the latency required |
 | Max tokens | 1500 | Sufficient for full government warning text + all fields in JSON; well within Claude's output limits |
 | Temperature | 0 | OCR and extraction — zero creativity required. Deterministic output. |
 | Top-p | Default (1.0) | Temperature 0 makes top-p irrelevant |
