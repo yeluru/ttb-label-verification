@@ -32,10 +32,10 @@ function NavLink({
 
 export function Nav() {
   const pathname = usePathname() ?? '/'
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark')
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
 
   useEffect(() => {
-    const activeTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'dark'
+    const activeTheme = document.documentElement.getAttribute('data-theme') as 'light' | 'dark' || 'light'
     setTheme(activeTheme)
   }, [])
 
