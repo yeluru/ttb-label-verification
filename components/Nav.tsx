@@ -67,7 +67,8 @@ export function Nav() {
         </Link>
 
         <nav className="ml-2 hidden sm:flex items-center gap-1.5" aria-label="Primary">
-          <NavLink href="/" label="Single Verify" active={pathname === '/'} />
+          <NavLink href="/" label="Home" active={pathname === '/'} />
+          <NavLink href="/single" label="Single Verify" active={pathname.startsWith('/single')} />
           <NavLink
             href="/batch"
             label="Batch Verify"
@@ -110,13 +111,14 @@ export function Nav() {
         </div>
       </div>
       <nav
-        className="sm:hidden border-t border-[var(--header-border)] px-3 py-2 grid grid-cols-2 gap-2"
+        className="sm:hidden border-t border-[var(--header-border)] px-3 py-2 grid grid-cols-3 gap-2"
         aria-label="Primary mobile"
       >
-        <NavLink href="/" label="Single Verify" active={pathname === '/'} />
+        <NavLink href="/" label="Home" active={pathname === '/'} />
+        <NavLink href="/single" label="Single" active={pathname.startsWith('/single')} />
         <NavLink
           href="/batch"
-          label="Batch Verify"
+          label="Batch"
           active={pathname.startsWith('/batch')}
         />
       </nav>
