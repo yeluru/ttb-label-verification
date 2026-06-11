@@ -16,7 +16,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState, Fragment } from 'react'
 import { BeverageTypeSelector } from '@/components/BeverageTypeSelector'
 import { FileDropZone } from '@/components/FileDropZone'
 import { PageHeader } from '@/components/PageHeader'
@@ -511,11 +511,13 @@ export default function BatchVerifyPage() {
                     const rowErrSet = rowErrors[u.id]
                     const hasRowError = (rowErrSet?.size ?? 0) > 0
                     return (
+                      <Fragment key={u.id}>
                       <tr
-                        key={u.id}
                         className={`${
                           idx % 2 === 0 ? 'bg-transparent' : 'bg-[var(--color-surface-quiet)]/20'
-                        } hover:bg-[var(--color-surface-elevated)] transition-colors duration-150 border-b border-[var(--color-border)] last:border-b-0 ${
+                        } hover:bg-[var(--color-surface-elevated)] transition-colors duration-150 ${
+                          !isExpanded ? 'border-b border-[var(--color-border)] last:border-b-0' : ''
+                        } ${
                           hasRowError ? 'shadow-[inset_2px_0_0_0_var(--color-flag)]' : ''
                         }`}
                       >
@@ -572,20 +574,6 @@ export default function BatchVerifyPage() {
                         {showResults && (
                           <td className="px-4 py-3 align-top">
                             <ResultCell ev={ev} batchStatus={batchStatus} />
-                            {isExpanded && ev?.result && (
-                              <div className="mt-3 space-y-3 fade-up">
-                                <VisualLimitationNotice />
-                                <div className="border border-[var(--color-border)] rounded-md overflow-hidden bg-[var(--color-surface-quiet)]">
-                                  {ev.result.fields.map((fr, i) => (
-                                    <FieldResultRow
-                                      key={fr.fieldKey}
-                                      result={fr}
-                                      isLast={i === ev.result!.fields.length - 1}
-                                    />
-                                  ))}
-                                </div>
-                              </div>
-                            )}
                           </td>
                         )}
 
@@ -616,6 +604,25 @@ export default function BatchVerifyPage() {
                           ) : null}
                         </td>
                       </tr>
+                      {showResults && isExpanded && ev?.result && (
+                        <tr className="border-b border-[var(--color-border)] last:border-b-0 bg-transparent">
+                          <td colSpan={3} className="p-0">
+                            <div className="px-4 pb-5 pt-1 space-y-3 fade-up max-w-full overflow-hidden">
+                              <VisualLimitationNotice />
+                              <div className="border border-[var(--color-border)] rounded-md overflow-hidden bg-[var(--color-surface-quiet)] w-full">
+                                {ev.result.fields.map((fr, i) => (
+                                  <FieldResultRow
+                                    key={fr.fieldKey}
+                                    result={fr}
+                                    isLast={i === ev.result!.fields.length - 1}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      </Fragment>
                     )
                  })}
                </tbody>

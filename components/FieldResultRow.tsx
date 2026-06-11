@@ -126,7 +126,7 @@ export function FieldResultRow({
 
   return (
     <div
-      className={`relative ${s.bg} ${s.accentBar} px-5 py-4 ${
+      className={`relative ${s.bg} ${s.accentBar} p-3 sm:px-4 sm:py-3.5 ${
         isLast ? '' : 'border-b border-[var(--color-border)]'
       }`}
     >
@@ -153,7 +153,7 @@ export function FieldResultRow({
             </p>
           )}
           {(result.submittedValue || result.extractedValue !== null || isWarningMismatch) && (
-            <div className="mt-2.5 grid grid-cols-[68px_1fr] gap-x-3 gap-y-1.5 text-[12px] bg-[var(--color-surface-quiet)] border border-[var(--color-border)] rounded-md px-3 py-2">
+            <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-[68px_1fr] gap-x-3 gap-y-1 sm:gap-y-1.5 text-[12px] bg-[var(--color-surface-quiet)] border border-[var(--color-border)] rounded-md p-2.5 sm:px-3 sm:py-2 overflow-x-auto">
               {isWarningMismatch ? (
                 <>
                   <span className="text-[var(--color-text-secondary)] uppercase tracking-[0.06em] text-[10px] font-semibold pt-px">
