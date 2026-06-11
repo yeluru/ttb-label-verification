@@ -126,11 +126,11 @@ export function FieldResultRow({
 
   return (
     <div
-      className={`relative ${s.bg} ${s.accentBar} p-3 sm:px-4 sm:py-3.5 ${
+      className={`relative ${s.bg} ${s.accentBar} p-2.5 sm:px-3 sm:py-2.5 ${
         isLast ? '' : 'border-b border-[var(--color-border)]'
       }`}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-2.5">
         <span
           className={`h-7 w-7 rounded-full inline-flex items-center justify-center shrink-0 ${s.iconBg}`}
         >
@@ -138,7 +138,7 @@ export function FieldResultRow({
         </span>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <span className="text-[13.5px] font-semibold text-[var(--color-text)]">
+            <span className="text-[13px] font-semibold text-[var(--color-text)]">
               {result.fieldName}
             </span>
             <span
@@ -148,12 +148,12 @@ export function FieldResultRow({
             </span>
           </div>
           {result.status !== 'pass' && result.reason && (
-            <p className={`text-[12.5px] mt-1.5 leading-relaxed ${s.reasonColor}`}>
+            <p className={`text-[12px] mt-1 leading-relaxed ${s.reasonColor}`}>
               {result.reason}
             </p>
           )}
           {(result.submittedValue || result.extractedValue !== null || isWarningMismatch) && (
-            <div className="mt-2.5 grid grid-cols-1 sm:grid-cols-[68px_1fr] gap-x-3 gap-y-1 sm:gap-y-1.5 text-[12px] bg-[var(--color-surface-quiet)] border border-[var(--color-border)] rounded-md p-2.5 sm:px-3 sm:py-2 overflow-x-auto">
+            <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-[68px_1fr] gap-x-3 gap-y-1 sm:gap-y-0.5 text-[11.5px] bg-[var(--color-surface-quiet)] border border-[var(--color-border)] rounded-md p-2 sm:px-2.5 sm:py-1.5 overflow-x-auto">
               {isWarningMismatch ? (
                 <>
                   <span className="text-[var(--color-text-secondary)] uppercase tracking-[0.06em] text-[10px] font-semibold pt-px">
