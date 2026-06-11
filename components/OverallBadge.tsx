@@ -18,31 +18,31 @@ const VARIANTS: Record<
   }
 > = {
   PASS: {
-    bg: 'bg-[#F0FDF4]',
-    text: 'text-[#15803D]',
-    border: 'border-[#BBF7D0]',
-    accent: 'bg-[#16A34A]',
+    bg: 'bg-[var(--color-pass-bg)]',
+    text: 'text-[var(--color-pass)]',
+    border: 'ring-1 ring-inset ring-[var(--color-pass-border)]',
+    accent: 'bg-[var(--color-pass)]',
     icon: CheckCircle2,
     headline: 'All fields match the submitted form',
-    glow: 'shadow-sm',
+    glow: 'shadow-[0_0_15px_var(--color-pass-border)]',
   },
   FLAG: {
-    bg: 'bg-[#FEF2F2]',
-    text: 'text-[#B91C1C]',
-    border: 'border-[#FECACA]',
-    accent: 'bg-[#DC2626]',
+    bg: 'bg-[var(--color-flag-bg)]',
+    text: 'text-[var(--color-flag)]',
+    border: 'ring-1 ring-inset ring-[var(--color-flag-border)]',
+    accent: 'bg-[var(--color-flag)]',
     icon: XCircle,
     headline: 'One or more fields do not match',
-    glow: 'shadow-sm',
+    glow: 'shadow-[0_0_15px_var(--color-flag-border)]',
   },
   'NEEDS REVIEW': {
-    bg: 'bg-[#FFFBEB]',
-    text: 'text-[#B45309]',
-    border: 'border-[#FDE68A]',
-    accent: 'bg-[#D97706]',
+    bg: 'bg-[var(--color-review-bg)]',
+    text: 'text-[var(--color-review)]',
+    border: 'ring-1 ring-inset ring-[var(--color-review-border)]',
+    accent: 'bg-[var(--color-review)]',
     icon: AlertTriangle,
     headline: 'AI uncertain on one or more fields',
-    glow: 'shadow-sm',
+    glow: 'shadow-[0_0_15px_var(--color-review-border)]',
   },
 }
 
@@ -58,7 +58,7 @@ export function OverallBadge({ result }: Props) {
     <div
       role="status"
       aria-live="polite"
-      className={`relative overflow-hidden rounded-lg border ${v.border} ${v.bg} ${v.glow} fade-up`}
+      className={`relative overflow-hidden rounded-lg ${v.border} ${v.bg} ${v.glow} fade-up bg-gradient-to-r from-transparent to-[var(--color-surface)]/40`}
     >
       <span aria-hidden className={`absolute inset-y-0 left-0 w-1 ${v.accent}`} />
       <div className="flex items-center gap-5 p-5 pl-6">
@@ -74,26 +74,26 @@ export function OverallBadge({ result }: Props) {
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[12px]">
             <span className="inline-flex items-center gap-1.5">
-              <span className="num text-[#0F172A] font-bold">{passCount}</span>
-              <span className="text-[#94A3B8]">/</span>
-              <span className="num text-[#94A3B8]">{total}</span>
-              <span className="text-[#475569]">matched</span>
+              <span className="num text-[var(--color-text)] font-bold">{passCount}</span>
+              <span className="text-[var(--color-text-muted)]">/</span>
+              <span className="num text-[var(--color-text-secondary)]">{total}</span>
+              <span className="text-[var(--color-text-secondary)] font-medium">matched</span>
             </span>
             {flagCount > 0 && (
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#DC2626]" aria-hidden />
-                <span className="num text-[#DC2626] font-bold">{flagCount}</span>
-                <span className="text-[#475569]">flagged</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-flag)]" aria-hidden />
+                <span className="num text-[var(--color-flag)] font-bold">{flagCount}</span>
+                <span className="text-[var(--color-text-secondary)] font-medium">flagged</span>
               </span>
             )}
             {reviewCount > 0 && (
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#D97706]" aria-hidden />
-                <span className="num text-[#D97706] font-bold">{reviewCount}</span>
-                <span className="text-[#475569]">needs review</span>
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--color-review)]" aria-hidden />
+                <span className="num text-[var(--color-review)] font-bold">{reviewCount}</span>
+                <span className="text-[var(--color-text-secondary)] font-medium">needs review</span>
               </span>
             )}
-            <span className="ml-auto inline-flex items-center gap-1 text-[#94A3B8] num">
+            <span className="ml-auto inline-flex items-center gap-1 text-[var(--color-text-muted)] num">
               <Clock className="h-3 w-3" aria-hidden />
               {(result.processingMs / 1000).toFixed(1)}s
             </span>

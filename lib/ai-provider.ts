@@ -292,14 +292,22 @@ export class MockProvider implements AIProvider {
     else if (filename.includes('spirits-warning-titlecase')) matchedKey = 'spirits-warning-titlecase'
     else if (filename.includes('spirits-warning-wording')) matchedKey = 'spirits-warning-wording'
     else if (filename.includes('spirits-warning-missing')) matchedKey = 'spirits-warning-missing'
-    else if (filename.includes('spirits-import-pass')) matchedKey = 'spirits-import-pass'
+    else if (filename.includes('spirits-import-prefix-flag')) matchedKey = 'spirits-import-prefix-flag'
     else if (filename.includes('spirits-import-mismatch')) matchedKey = 'spirits-import-mismatch'
     else if (filename.includes('spirits-degraded')) matchedKey = 'spirits-degraded'
     else if (filename.includes('wine-abv-blank-pass')) matchedKey = 'wine-abv-blank-pass'
     else if (filename.includes('wine-abv-blank-flag')) matchedKey = 'wine-abv-blank-flag'
     else if (filename.includes('wine-appellation-pass')) matchedKey = 'wine-appellation-pass'
+    else if (filename.includes('wine-appellation-mismatch')) matchedKey = 'wine-appellation-mismatch'
+    else if (filename.includes('wine-net-contents-mismatch')) matchedKey = 'wine-net-contents-mismatch'
+    else if (filename.includes('wine-brand-mismatch')) matchedKey = 'wine-brand-mismatch'
+    else if (filename.includes('wine-pass')) matchedKey = 'wine-pass'
     else if (filename.includes('beer-abv-blank-pass')) matchedKey = 'beer-abv-blank-pass'
     else if (filename.includes('beer-abv-on-label')) matchedKey = 'beer-abv-on-label'
+    else if (filename.includes('beer-net-contents-mismatch')) matchedKey = 'beer-net-contents-mismatch'
+    else if (filename.includes('beer-brand-mismatch')) matchedKey = 'beer-brand-mismatch'
+    else if (filename.includes('beer-warning-missing')) matchedKey = 'beer-warning-missing'
+    else if (filename.includes('beer-pass')) matchedKey = 'beer-pass'
 
     const standardWarning =
       'GOVERNMENT WARNING: (1) According to the Surgeon General, women should not drink ' +
@@ -321,7 +329,7 @@ export class MockProvider implements AIProvider {
       if (matchedKey) {
         // Return the specific values written on the generated test label image
         if (cfg.key === 'governmentWarning') {
-          if (matchedKey === 'spirits-warning-missing') {
+          if (matchedKey === 'spirits-warning-missing' || matchedKey === 'beer-warning-missing') {
             fields.governmentWarning = { value: null, confidence: 'high' }
           } else if (matchedKey === 'spirits-warning-titlecase') {
             fields.governmentWarning = { value: warningTitleCase, confidence: 'high' }
@@ -337,9 +345,9 @@ export class MockProvider implements AIProvider {
             fields.abv = { value: null, confidence: 'high' }
           } else if (matchedKey === 'wine-abv-blank-flag') {
             fields.abv = { value: '15% Alc./Vol.', confidence: 'high' }
-          } else if (matchedKey === 'wine-appellation-pass') {
+          } else if (matchedKey === 'wine-appellation-pass' || matchedKey === 'wine-pass' || matchedKey === 'wine-net-contents-mismatch' || matchedKey === 'wine-brand-mismatch' || matchedKey === 'wine-appellation-mismatch') {
             fields.abv = { value: '13.5% Alc./Vol.', confidence: 'high' }
-          } else if (matchedKey === 'beer-abv-on-label') {
+          } else if (matchedKey === 'beer-abv-on-label' || matchedKey === 'beer-pass' || matchedKey === 'beer-net-contents-mismatch' || matchedKey === 'beer-brand-mismatch' || matchedKey === 'beer-warning-missing') {
             fields.abv = { value: '5.2% Alc./Vol.', confidence: 'high' }
           } else if (matchedKey === 'spirits-degraded') {
             fields.abv = {
@@ -355,6 +363,10 @@ export class MockProvider implements AIProvider {
             fields.brandName = { value: 'OLD TOM DISTILLERY', confidence: 'high' }
           } else if (matchedKey === 'spirits-brand-mismatch') {
             fields.brandName = { value: 'Old Tom', confidence: 'high' }
+          } else if (matchedKey === 'wine-brand-mismatch') {
+            fields.brandName = { value: 'Sonoma Hills Estate', confidence: 'high' }
+          } else if (matchedKey === 'beer-brand-mismatch') {
+            fields.brandName = { value: 'Pine Mountain Brewing', confidence: 'high' }
           } else if (matchedKey.startsWith('wine-')) {
             fields.brandName = { value: 'Sonoma Hills Winery', confidence: 'high' }
           } else if (matchedKey.startsWith('beer-')) {
@@ -363,7 +375,7 @@ export class MockProvider implements AIProvider {
             fields.brandName = { value: 'Old Tom Distillery', confidence: 'high' }
           }
         } else if (cfg.key === 'classType') {
-          if (matchedKey.startsWith('wine-appellation-')) {
+          if (matchedKey.startsWith('wine-appellation-') || matchedKey === 'wine-pass' || matchedKey === 'wine-net-contents-mismatch' || matchedKey === 'wine-brand-mismatch') {
             fields.classType = { value: 'Cabernet Sauvignon', confidence: 'high' }
           } else if (matchedKey.startsWith('wine-')) {
             fields.classType = { value: 'California Red Wine', confidence: 'high' }
@@ -373,7 +385,11 @@ export class MockProvider implements AIProvider {
             fields.classType = { value: 'Kentucky Straight Bourbon Whiskey', confidence: 'high' }
           }
         } else if (cfg.key === 'netContents') {
-          if (matchedKey.startsWith('beer-')) {
+          if (matchedKey === 'beer-net-contents-mismatch') {
+            fields.netContents = { value: '16 FL OZ', confidence: 'high' }
+          } else if (matchedKey === 'wine-net-contents-mismatch') {
+            fields.netContents = { value: '1.5 L', confidence: 'high' }
+          } else if (matchedKey.startsWith('beer-')) {
             fields.netContents = { value: '12 FL OZ', confidence: 'high' }
           } else {
             fields.netContents = { value: '750mL', confidence: 'high' }
@@ -382,7 +398,7 @@ export class MockProvider implements AIProvider {
           if (matchedKey.startsWith('wine-')) {
             fields.producerName = { value: 'Sonoma Hills Winery', confidence: 'high' }
           } else if (matchedKey.startsWith('beer-')) {
-            fields.producerName = { value: 'Pine Ridge Brewing Co', confidence: 'high' }
+            fields.producerName = { value: 'Pine Ridge Brewing Co.', confidence: 'high' }
           } else {
             fields.producerName = { value: 'Old Tom Distillery', confidence: 'high' }
           }
@@ -396,11 +412,13 @@ export class MockProvider implements AIProvider {
           }
         } else if (cfg.key === 'countryOfOrigin') {
           fields.countryOfOrigin = {
-            value: input.importedProduct ? 'France' : null,
+            value: matchedKey === 'spirits-import-prefix-flag' ? 'Product of France' : (input.importedProduct ? 'France' : null),
             confidence: 'high',
           }
         } else if (cfg.key === 'appellation') {
-          if (matchedKey === 'wine-appellation-pass') {
+          if (matchedKey === 'wine-appellation-mismatch') {
+            fields.appellation = { value: 'Sonoma County', confidence: 'high' }
+          } else if (matchedKey === 'wine-appellation-pass' || matchedKey === 'wine-pass' || matchedKey === 'wine-net-contents-mismatch' || matchedKey === 'wine-brand-mismatch') {
             fields.appellation = { value: 'Napa Valley', confidence: 'high' }
           } else {
             fields.appellation = { value: null, confidence: 'high' }

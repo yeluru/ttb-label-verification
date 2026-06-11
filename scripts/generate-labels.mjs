@@ -25,7 +25,7 @@ const WORDING_WARNING =
 const SPIRITS_CLASS = 'Kentucky Straight Bourbon Whiskey'
 const WINE_PRODUCER = 'Sonoma Hills Winery'
 const WINE_ADDRESS = '500 Vineyard Rd, Sonoma, CA 95476'
-const BEER_PRODUCER = 'Pine Ridge Brewing Co'
+const BEER_PRODUCER = 'Pine Ridge Brewing Co.'
 const BEER_ADDRESS = '88 Pine St, Portland, OR 97204'
 
 /** @type {Array<{key:string,kind:string,vars:Record<string,any>,degrade?:boolean,omitWarning?:boolean}>} */
@@ -40,7 +40,7 @@ const LABELS = [
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: STANDARD_WARNING,
     },
   },
@@ -54,7 +54,7 @@ const LABELS = [
       abv: '46% Alc./Vol. (92 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: STANDARD_WARNING,
     },
   },
@@ -68,7 +68,7 @@ const LABELS = [
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: STANDARD_WARNING,
     },
   },
@@ -82,7 +82,7 @@ const LABELS = [
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: STANDARD_WARNING,
     },
   },
@@ -96,7 +96,7 @@ const LABELS = [
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: TITLECASE_WARNING,
     },
   },
@@ -110,7 +110,7 @@ const LABELS = [
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: WORDING_WARNING,
     },
   },
@@ -125,13 +125,13 @@ const LABELS = [
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: '',
     },
   },
-  // Imported spirits — country matches
+  // Imported spirits — country prefix mismatch
   {
-    key: 'spirits-import-pass',
+    key: 'spirits-import-prefix-flag',
     kind: 'spirits',
     vars: {
       brand: 'Old Tom Distillery',
@@ -140,7 +140,7 @@ const LABELS = [
       netContents: '750mL',
       country: 'Product of France',
       producerLine:
-        'Imported by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: STANDARD_WARNING,
     },
   },
@@ -153,9 +153,9 @@ const LABELS = [
       classType: SPIRITS_CLASS,
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
-      country: 'Product of France',
+      country: 'France',
       producerLine:
-        'Imported by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: STANDARD_WARNING,
     },
   },
@@ -170,7 +170,7 @@ const LABELS = [
       abv: '45% Alc./Vol. (90 Proof)',
       netContents: '750mL',
       producerLine:
-        'Bottled by Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
+        'Old Tom Distillery, 123 Bourbon St, Louisville, KY 40202',
       warning: STANDARD_WARNING,
     },
   },
@@ -182,7 +182,7 @@ const LABELS = [
       brand: WINE_PRODUCER,
       classType: 'California Red Wine',
       netContents: '750mL',
-      producerLine: `Produced and bottled by ${WINE_PRODUCER}, ${WINE_ADDRESS}`,
+      producerLine: `${WINE_PRODUCER}, ${WINE_ADDRESS}`,
       warning: STANDARD_WARNING,
     },
   },
@@ -195,7 +195,7 @@ const LABELS = [
       classType: 'California Red Wine',
       abv: '15% Alc./Vol.',
       netContents: '750mL',
-      producerLine: `Produced and bottled by ${WINE_PRODUCER}, ${WINE_ADDRESS}`,
+      producerLine: `${WINE_PRODUCER}, ${WINE_ADDRESS}`,
       warning: STANDARD_WARNING,
     },
   },
@@ -209,7 +209,7 @@ const LABELS = [
       appellation: 'Napa Valley',
       abv: '13.5% Alc./Vol.',
       netContents: '750mL',
-      producerLine: `Produced and bottled by ${WINE_PRODUCER}, ${WINE_ADDRESS}`,
+      producerLine: `${WINE_PRODUCER}, ${WINE_ADDRESS}`,
       warning: STANDARD_WARNING,
     },
   },
@@ -221,7 +221,7 @@ const LABELS = [
       brand: 'Pine Ridge Brewing',
       classType: 'India Pale Ale',
       netContents: '12 FL OZ',
-      producerLine: `Brewed and bottled by ${BEER_PRODUCER}, ${BEER_ADDRESS}`,
+      producerLine: `${BEER_PRODUCER}, ${BEER_ADDRESS}`,
       warning: STANDARD_WARNING,
     },
   },
@@ -234,7 +234,116 @@ const LABELS = [
       classType: 'India Pale Ale',
       abv: '5.2% Alc./Vol.',
       netContents: '12 FL OZ',
-      producerLine: `Brewed and bottled by ${BEER_PRODUCER}, ${BEER_ADDRESS}`,
+      producerLine: `${BEER_PRODUCER}, ${BEER_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Wine - complete match (PASS)
+  {
+    key: 'wine-pass',
+    kind: 'wine',
+    vars: {
+      brand: WINE_PRODUCER,
+      classType: 'Cabernet Sauvignon',
+      appellation: 'Napa Valley',
+      abv: '13.5% Alc./Vol.',
+      netContents: '750mL',
+      producerLine: `${WINE_PRODUCER}, ${WINE_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Wine - net contents mismatch (FLAG)
+  {
+    key: 'wine-net-contents-mismatch',
+    kind: 'wine',
+    vars: {
+      brand: WINE_PRODUCER,
+      classType: 'Cabernet Sauvignon',
+      appellation: 'Napa Valley',
+      abv: '13.5% Alc./Vol.',
+      netContents: '1.5 L',
+      producerLine: `${WINE_PRODUCER}, ${WINE_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Wine - brand mismatch (FLAG)
+  {
+    key: 'wine-brand-mismatch',
+    kind: 'wine',
+    vars: {
+      brand: 'Sonoma Hills Estate',
+      classType: 'Cabernet Sauvignon',
+      appellation: 'Napa Valley',
+      abv: '13.5% Alc./Vol.',
+      netContents: '750mL',
+      producerLine: `${WINE_PRODUCER}, ${WINE_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Wine - appellation mismatch (FLAG)
+  {
+    key: 'wine-appellation-mismatch',
+    kind: 'wine',
+    vars: {
+      brand: WINE_PRODUCER,
+      classType: 'Cabernet Sauvignon',
+      appellation: 'Sonoma County',
+      abv: '13.5% Alc./Vol.',
+      netContents: '750mL',
+      producerLine: `${WINE_PRODUCER}, ${WINE_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Beer — complete match (PASS)
+  {
+    key: 'beer-pass',
+    kind: 'beer',
+    vars: {
+      brand: 'Pine Ridge Brewing',
+      classType: 'India Pale Ale',
+      abv: '5.2% Alc./Vol.',
+      netContents: '12 FL OZ',
+      producerLine: `${BEER_PRODUCER}, ${BEER_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Beer — net contents mismatch (FLAG)
+  {
+    key: 'beer-net-contents-mismatch',
+    kind: 'beer',
+    vars: {
+      brand: 'Pine Ridge Brewing',
+      classType: 'India Pale Ale',
+      abv: '5.2% Alc./Vol.',
+      netContents: '16 FL OZ',
+      producerLine: `${BEER_PRODUCER}, ${BEER_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Beer — brand mismatch (FLAG)
+  {
+    key: 'beer-brand-mismatch',
+    kind: 'beer',
+    vars: {
+      brand: 'Pine Mountain Brewing',
+      classType: 'India Pale Ale',
+      abv: '5.2% Alc./Vol.',
+      netContents: '12 FL OZ',
+      producerLine: `${BEER_PRODUCER}, ${BEER_ADDRESS}`,
+      warning: STANDARD_WARNING,
+    },
+  },
+  // Beer — warning missing (FLAG)
+  {
+    key: 'beer-warning-missing',
+    kind: 'beer',
+    omitWarning: true,
+    vars: {
+      brand: 'Pine Ridge Brewing',
+      classType: 'India Pale Ale',
+      abv: '5.2% Alc./Vol.',
+      netContents: '12 FL OZ',
+      producerLine: `${BEER_PRODUCER}, ${BEER_ADDRESS}`,
       warning: STANDARD_WARNING,
     },
   },
@@ -267,11 +376,31 @@ function buildHtml(entry) {
     : ''
   const glareDiv = entry.degrade ? '<div class="glare" aria-hidden="true"></div>' : ''
 
+  const KEY_TO_DISPLAY = {
+    'spirits-pass': 'Spirits — All Fields Pass (PASS)',
+    'spirits-abv-mismatch': 'Spirits — ABV Mismatch (FLAG)',
+    'spirits-brand-case': 'Spirits — Brand Casing (PASS)',
+    'spirits-brand-mismatch': 'Spirits — Brand Mismatch (FLAG)',
+    'spirits-warning-titlecase': 'Spirits — Warning Title Case (FLAG)',
+    'spirits-warning-wording': 'Spirits — Warning Wording Changed (FLAG)',
+    'spirits-warning-missing': 'Spirits — Warning Missing (FLAG)',
+    'spirits-import-prefix-flag': 'Spirits — Import Prefix Mismatch (FLAG)',
+    'spirits-import-mismatch': 'Spirits — Import Mismatch (FLAG)',
+    'spirits-degraded': 'Spirits — Degraded Image (NEEDS REVIEW)',
+    'wine-abv-blank-pass': 'Wine — ABV Blank Pass (PASS)',
+    'wine-abv-blank-flag': 'Wine — ABV on Label, Blank Form (FLAG)',
+    'wine-appellation-pass': 'Wine — Appellation Match (PASS)',
+    'beer-abv-blank-pass': 'Beer — ABV Blank Pass (PASS)',
+    'beer-abv-on-label': 'Beer — ABV on Label, Blank Form (FLAG)',
+  }
+
+  const titleText = KEY_TO_DISPLAY[entry.key] || entry.key
+
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>${entry.key}</title>
+<title>${titleText}</title>
 <link rel="stylesheet" href="_template.css">
 ${degradeStyles}
 </head>

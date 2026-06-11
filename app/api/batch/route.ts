@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
     )
   }
   const beverageTypeRaw = formData.get('beverageType')
-  const isImport = formData.get('isImport') === 'true'
 
   if (beverageTypeRaw !== 'spirits' && beverageTypeRaw !== 'wine' && beverageTypeRaw !== 'beer') {
     return new Response(
@@ -123,7 +122,7 @@ export async function POST(request: NextRequest) {
 
   const rowValidationErrors: { index: number; fields: LabelFieldKey[] }[] = []
   formDataArray.forEach((row, index) => {
-    const validation = validateFormData(beverageType, isImport, row ?? {})
+    const validation = validateFormData(beverageType, row ?? {})
     if (!validation.ok) {
       rowValidationErrors.push({ index, fields: validation.missing })
     }
@@ -160,7 +159,6 @@ export async function POST(request: NextRequest) {
           const result = await processSingleLabel(
             file,
             beverageType,
-            isImport,
             formFields,
           )
           result.processingMs = Date.now() - t0

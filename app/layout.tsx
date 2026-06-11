@@ -1,19 +1,26 @@
 import type { Metadata } from 'next'
-import { Inter, JetBrains_Mono } from 'next/font/google'
+import { Outfit, Fira_Sans, Fira_Code } from 'next/font/google'
 import './globals.css'
 import { Nav } from '@/components/Nav'
 
-const inter = Inter({
+const outfit = Outfit({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-inter',
+  variable: '--font-outfit',
   display: 'swap',
 })
 
-const jetbrains = JetBrains_Mono({
+const firaSans = Fira_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-fira-sans',
+  display: 'swap',
+})
+
+const firaCode = Fira_Code({
   subsets: ['latin'],
   weight: ['400', '500', '600'],
-  variable: '--font-jetbrains',
+  variable: '--font-fira-code',
   display: 'swap',
 })
 
@@ -27,10 +34,18 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrains.variable} h-full`}>
+    <html lang="en" className={`${outfit.variable} ${firaSans.variable} ${firaCode.variable} h-full`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var theme = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+          })();
+        ` }} />
+      </head>
       <body
-        className="min-h-full bg-[#F8FAFC] text-[#0F172A] antialiased flex flex-col"
-        style={{ fontFamily: 'var(--font-inter), Inter, system-ui, sans-serif' }}
+        className="min-h-full antialiased flex flex-col"
+        style={{ fontFamily: 'var(--font-fira-sans), sans-serif' }}
       >
         <a
           href="#main"

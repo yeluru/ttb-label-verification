@@ -19,7 +19,6 @@ import {
 import { useCallback, useMemo, useState } from 'react'
 import { BeverageTypeSelector } from '@/components/BeverageTypeSelector'
 import { FileDropZone } from '@/components/FileDropZone'
-import { LoadSampleSelector } from '@/components/LoadSampleSelector'
 import { PageHeader } from '@/components/PageHeader'
 import { StatusPill } from '@/components/StatusPill'
 import { VisualLimitationNotice } from '@/components/VisualLimitationNotice'
@@ -61,7 +60,6 @@ function emptyFormData(): LabelFormData {
 
 export default function BatchVerifyPage() {
   const [beverageType, setBeverageType] = useState<BeverageType>('spirits')
-  const [isImport, setIsImport] = useState(false)
   const [uploads, setUploads] = useState<UploadedFile[]>([])
   const [formMap, setFormMap] = useState<BatchFormMap>({})
   const [batchStatus, setBatchStatus] = useState<BatchStatus>('idle')
@@ -79,6 +77,7 @@ export default function BatchVerifyPage() {
   const [seedingDemo, setSeedingDemo] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [batchError, setBatchError] = useState<string | null>(null)
+  const [sampleKey, setSampleKey] = useState<string>('')
 
   const addFiles = useCallback((files: File[]) => {
     const accepted = files.filter((f) => isAcceptedFile(f))
@@ -139,34 +138,17 @@ export default function BatchVerifyPage() {
   }
 
   // Load one sample dataset and apply it to ALL existing uploaded rows.
-  const handleLoadSample = (ds: MockDataset) => {
-    setBeverageType(ds.beverageType)
-    setIsImport(ds.isImport)
-    setFormMap((prev) => {
-      const cp = { ...prev }
-      for (const u of uploads) cp[u.id] = { ...ds.formData }
-      return cp
-    })
-  }
-
-  const handleInsertWarning = () => {
-    setFormMap((prev) => {
-      const cp = { ...prev }
-      for (const u of uploads) {
-        cp[u.id] = {
-          ...(cp[u.id] ?? emptyFormData()),
-          governmentWarning: TTB_STANDARD_WARNING_TEXT,
-        }
-      }
-      return cp
-    })
-  }
-
-  // Seed a representative spirits demo batch — one pass + one ABV flag + one degraded.
+  // Seed a representative demo batch based on beverage type
   const seedDemoBatch = async () => {
     setSeedingDemo(true)
     try {
-      const keys = ['spirits-pass', 'spirits-abv-mismatch', 'spirits-degraded']
+      let keys = ['spirits-pass', 'spirits-abv-mismatch', 'spirits-degraded']
+      if (beverageType === 'wine') {
+        keys = ['wine-pass', 'wine-net-contents-mismatch', 'wine-brand-mismatch']
+      } else if (beverageType === 'beer') {
+        keys = ['beer-pass', 'beer-brand-mismatch', 'beer-warning-missing']
+      }
+      
       const datasets = keys
         .map((k) => MOCK_DATASETS.find((d) => d.label === k))
         .filter((d): d is MockDataset => !!d)
@@ -182,8 +164,6 @@ export default function BatchVerifyPage() {
           console.error('demo seed failed for', ds.label, e)
         }
       }
-      setBeverageType('spirits')
-      setIsImport(false)
       setUploads((prev) => [...prev, ...newUploads])
       setFormMap((prev) => ({ ...prev, ...newForms }))
     } finally {
@@ -205,15 +185,15 @@ export default function BatchVerifyPage() {
   }
 
   const fields = useMemo(
-    () => getApplicableFields(beverageType, isImport),
-    [beverageType, isImport],
+    () => getApplicableFields(beverageType),
+    [beverageType],
   )
 
   const validateAll = (): boolean => {
     let ok = true
     const errs: Record<string, Set<LabelFieldKey>> = {}
     for (const u of uploads) {
-      const v = validateFormData(beverageType, isImport, formMap[u.id] ?? {})
+      const v = validateFormData(beverageType, formMap[u.id] ?? {})
       if (!v.ok) {
         ok = false
         errs[u.id] = new Set(v.missing)
@@ -250,7 +230,6 @@ export default function BatchVerifyPage() {
 
       const fd = new FormData()
       fd.append('beverageType', beverageType)
-      fd.append('isImport', String(isImport))
       const formDataArray: LabelFormData[] = prepared.map(
         (p) => formMap[p.id] ?? emptyFormData(),
       )
@@ -364,15 +343,15 @@ export default function BatchVerifyPage() {
           <div className="hidden sm:flex items-center gap-2">
             {uploads.length > 0 && (
               <span className="chip">
-                <Files className="h-3 w-3 text-[#1B4F8A]" aria-hidden />
-                <span className="num font-semibold text-[#0F172A]">
+                <Files className="h-3 w-3 text-[var(--color-primary)]" aria-hidden />
+                <span className="num font-semibold text-[var(--color-text)]">
                   {uploads.length}
                 </span>
                 queued
               </span>
             )}
             <span className="chip">
-              <Zap className="h-3 w-3 text-[#1B4F8A]" aria-hidden />
+              <Zap className="h-3 w-3 text-[var(--color-primary)]" aria-hidden />
               SSE streaming
             </span>
           </div>
@@ -392,35 +371,25 @@ export default function BatchVerifyPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] xl:grid-cols-1 gap-5">
             <div>
               <label className="eyebrow block mb-2">Beverage type</label>
-              <BeverageTypeSelector value={beverageType} onChange={setBeverageType} />
-            </div>
-            <label className="flex items-center gap-2.5 cursor-pointer group rounded-md border border-[#D8E2ED] bg-[#F8FAFC] px-3 py-2.5">
-              <input
-                type="checkbox"
-                checked={isImport}
-                onChange={(e) => setIsImport(e.target.checked)}
-                className="h-4 w-4 rounded border-[#CBD5E1] text-[#1B4F8A] focus:ring-[#1B4F8A]/30"
+              <BeverageTypeSelector
+                value={beverageType}
+                onChange={(type) => {
+                  setBeverageType(type)
+                }}
               />
-              <span className="text-sm text-[#0F172A] group-hover:text-[#1B4F8A] transition-colors">
-                Imported product
-              </span>
-            </label>
-            <LoadSampleSelector
-              onLoad={handleLoadSample}
-              onInsertWarning={handleInsertWarning}
-            />
+            </div>
           </div>
         </section>
 
         {/* File upload */}
         {!showResults && (
-          <section className="card panel-accent p-5 pl-7 fade-up" aria-label="Upload labels">
+          <section className="card panel-accent p-5 pl-7 fade-up hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] transition-all duration-300" aria-label="Upload labels">
             <div className="mb-4">
-              <div className="eyebrow text-[#1B4F8A]">Batch intake</div>
-              <h2 className="mt-1 text-[17px] font-semibold text-[#0F172A]">
+              <div className="eyebrow text-[var(--color-primary)]">Batch intake</div>
+              <h2 className="mt-1 text-[17px] font-bold text-[var(--color-text)]" style={{ fontFamily: 'var(--font-outfit), sans-serif' }}>
                 Queue label artwork
               </h2>
-              <p className="mt-1 text-[12.5px] text-[#64748B]">
+              <p className="mt-1 text-[12.5px] text-[var(--color-text-secondary)]">
                 Drop every label first, then complete one row per file.
               </p>
             </div>
@@ -447,11 +416,11 @@ export default function BatchVerifyPage() {
 
       {/* Inline form table or results */}
       {uploads.length > 0 && (
-        <section className="card panel-accent overflow-hidden fade-up">
+        <section className="card panel-accent overflow-hidden fade-up hover:-translate-y-0.5 hover:shadow-[var(--shadow-card-hover)] transition-all duration-300">
           {batchError && (
             <div
               role="alert"
-              className="border-b border-[#FECACA] bg-[#FEF2F2] px-5 py-3 text-sm text-[#B91C1C] flex items-start gap-2"
+              className="border-b border-[var(--color-flag-border)] bg-[var(--color-flag-bg)] px-5 py-3 text-sm text-[var(--color-flag)] flex items-start gap-2 animate-pulse"
             >
               <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
               <span>{batchError}</span>
@@ -462,7 +431,7 @@ export default function BatchVerifyPage() {
             <div
               role="status"
               aria-live="polite"
-              className="sticky top-16 z-10 bg-white/95 backdrop-blur border-b border-[#E2E8F0] px-5 py-3 flex flex-wrap items-center gap-2"
+              className="bg-[var(--color-surface)]/95 backdrop-blur-sm border-b border-[var(--color-border)] px-5 py-4 flex flex-wrap items-center gap-3 shadow-sm z-10"
             >
               <StatusPill status="PASS" count={summary.pass} />
               <StatusPill status="FLAG" count={summary.flag} />
@@ -471,21 +440,21 @@ export default function BatchVerifyPage() {
                 <StatusPill status="ERROR" count={summary.errors} label="ERROR" />
               )}
               <div className="ml-auto flex items-center gap-3">
-                <span className="text-xs text-[#475569] num">
-                  <span className="font-semibold text-[#0F172A]">{completed}</span>
-                  <span className="text-[#94A3B8]"> / {summary.total}</span>{' '}
+                <span className="text-xs text-[var(--color-text-secondary)] num">
+                  <span className="font-semibold text-[var(--color-text)]">{completed}</span>
+                  <span className="text-[var(--color-text-muted)]"> / {summary.total}</span>{' '}
                   complete
                 </span>
                 {batchStatus === 'loading' && (
                   <div className="flex items-center gap-2">
-                    <div className="h-1.5 w-24 bg-[#E2E8F0] rounded-full overflow-hidden">
+                    <div className="h-1.5 w-24 bg-[var(--color-background-alt)] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-[#1B4F8A] transition-all duration-300"
+                        className="h-full bg-[var(--color-primary)] transition-all duration-300 shadow-[0_0_8px_var(--color-primary-tint-strong)]"
                         style={{ width: `${progressPct}%` }}
                       />
                     </div>
                     <Loader2
-                      className="h-4 w-4 text-[#1B4F8A] animate-spin"
+                      className="h-4 w-4 text-[var(--color-primary)] animate-spin"
                       aria-hidden
                     />
                   </div>
@@ -496,164 +465,164 @@ export default function BatchVerifyPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-sm border-collapse" role="table">
-              <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
+              <thead className="bg-[var(--color-surface-quiet)] border-b border-[var(--color-border)]">
                 <tr>
                   <th
-                    scope="col"
-                    className="text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#475569] px-4 py-3 w-[200px]"
-                  >
-                    File
-                  </th>
-                  {!showResults &&
-                    fields.map((f) => (
+                     scope="col"
+                     className="text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-secondary)] px-4 py-3 w-[200px]"
+                   >
+                     File
+                   </th>
+                   {!showResults &&
+                     fields.map((f) => (
+                       <th
+                         scope="col"
+                         key={f.key}
+                         className="text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-secondary)] px-2.5 py-3 min-w-[150px]"
+                       >
+                         <div className="flex items-center justify-between gap-2">
+                           <span>{f.label}</span>
+                           <button
+                             type="button"
+                             onClick={() => fillColumn(f.key)}
+                             className="text-[10px] font-bold text-[var(--color-primary)] hover:text-[var(--color-primary-dark)] normal-case tracking-normal cursor-pointer"
+                           >
+                             Fill ↓
+                           </button>
+                         </div>
+                       </th>
+                     ))}
+                   {showResults && (
                       <th
                         scope="col"
-                        key={f.key}
-                        className="text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#475569] px-2.5 py-3 min-w-[150px]"
+                        className="text-left text-[10.5px] font-bold uppercase tracking-[0.08em] text-[var(--color-text-secondary)] px-4 py-3"
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>{f.label}</span>
-                          <button
-                            type="button"
-                            onClick={() => fillColumn(f.key)}
-                            className="text-[10px] font-medium text-[#1B4F8A] hover:text-[#163F6E] normal-case tracking-normal cursor-pointer"
-                          >
-                            Fill ↓
-                          </button>
-                        </div>
+                        Result
                       </th>
-                    ))}
-                  {showResults && (
-                    <th
-                      scope="col"
-                      className="text-left text-[10.5px] font-semibold uppercase tracking-[0.08em] text-[#475569] px-4 py-3"
-                    >
-                      Result
-                    </th>
-                  )}
-                  <th scope="col" className="w-12" aria-label="Actions" />
-                </tr>
-              </thead>
-              <tbody>
-                {uploads.map((u, idx) => {
-                  const row = formMap[u.id] ?? emptyFormData()
-                  const ev = results[u.id]
-                  const isExpanded = expanded.has(u.id)
-                  const rowErrSet = rowErrors[u.id]
-                  const hasRowError = (rowErrSet?.size ?? 0) > 0
-                  return (
-                    <tr
-                      key={u.id}
-                      className={`${
-                        idx % 2 === 0 ? 'bg-white' : 'bg-[#FCFDFE]'
-                      } border-b border-[#E2E8F0] last:border-b-0 ${
-                        hasRowError ? 'shadow-[inset_2px_0_0_0_#DC2626]' : ''
-                      }`}
-                    >
-                      <td className="px-4 py-3 align-top">
-                        <div className="flex items-center gap-2">
-                          <span className="h-7 w-7 rounded-md bg-[#EEF4FB] border border-[#DCE9F5] inline-flex items-center justify-center shrink-0">
-                            <span className="text-[9.5px] font-bold uppercase tracking-wide text-[#1B4F8A] num">
-                              {(u.file.name.split('.').pop() ?? '').slice(0, 3)}
-                            </span>
-                          </span>
-                          <div className="min-w-0">
-                            <div
-                              className="text-[13px] font-medium text-[#0F172A] truncate"
-                              title={u.file.name}
-                            >
-                              {u.file.name}
-                            </div>
-                            <div className="text-[10.5px] text-[#94A3B8] num">
-                              {(u.file.size / 1024).toFixed(0)} KB
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-
-                      {!showResults &&
-                        fields.map((f) => {
-                          const hasError = rowErrSet?.has(f.key) ?? false
-                          const value = (row[f.key] ?? '') as string
-                          const isTextarea =
-                            f.key === 'governmentWarning' || f.key === 'producerAddress'
-                          return (
-                            <td key={f.key} className="px-2 py-2 align-top">
-                              {isTextarea ? (
-                                <textarea
-                                  value={value}
-                                  onChange={(e) => updateRow(u.id, f.key, e.target.value)}
-                                  rows={2}
-                                  className={`w-full min-w-[150px] text-[12.5px] rounded-md border ${hasError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'} bg-white px-2 py-1.5 focus:outline-none focus:border-[#1B4F8A] focus:ring-2 focus:ring-[#1B4F8A]/15 transition-colors leading-snug`}
-                                  aria-invalid={hasError}
-                                />
-                              ) : (
-                                <input
-                                  type="text"
-                                  value={value}
-                                  onChange={(e) => updateRow(u.id, f.key, e.target.value)}
-                                  className={`w-full h-8 text-[12.5px] rounded-md border ${hasError ? 'border-[#DC2626]' : 'border-[#E2E8F0]'} bg-white px-2 focus:outline-none focus:border-[#1B4F8A] focus:ring-2 focus:ring-[#1B4F8A]/15 transition-colors`}
-                                  aria-invalid={hasError}
-                                />
-                              )}
-                            </td>
-                          )
-                        })}
-
-                      {showResults && (
+                    )}
+                    <th scope="col" className="w-12" aria-label="Actions" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {uploads.map((u, idx) => {
+                    const row = formMap[u.id] ?? emptyFormData()
+                    const ev = results[u.id]
+                    const isExpanded = expanded.has(u.id)
+                    const rowErrSet = rowErrors[u.id]
+                    const hasRowError = (rowErrSet?.size ?? 0) > 0
+                    return (
+                      <tr
+                        key={u.id}
+                        className={`${
+                          idx % 2 === 0 ? 'bg-transparent' : 'bg-[var(--color-surface-quiet)]/20'
+                        } hover:bg-[var(--color-surface-elevated)] transition-colors duration-150 border-b border-[var(--color-border)] last:border-b-0 ${
+                          hasRowError ? 'shadow-[inset_2px_0_0_0_var(--color-flag)]' : ''
+                        }`}
+                      >
                         <td className="px-4 py-3 align-top">
-                          <ResultCell ev={ev} batchStatus={batchStatus} />
-                          {isExpanded && ev?.result && (
-                            <div className="mt-3 space-y-3 fade-up">
-                              <VisualLimitationNotice />
-                              <div className="border border-[#E2E8F0] rounded-md overflow-hidden bg-white">
-                                {ev.result.fields.map((fr, i) => (
-                                  <FieldResultRow
-                                    key={fr.fieldKey}
-                                    result={fr}
-                                    isLast={i === ev.result!.fields.length - 1}
-                                  />
-                                ))}
+                          <div className="flex items-center gap-2">
+                            <span className="h-7 w-7 rounded-md bg-[var(--color-surface)] border border-[var(--color-border)] inline-flex items-center justify-center shrink-0">
+                              <span className="text-[9.5px] font-bold uppercase tracking-wide text-[var(--color-primary)] num">
+                                {(u.file.name.split('.').pop() ?? '').slice(0, 3)}
+                              </span>
+                            </span>
+                            <div className="min-w-0">
+                              <div
+                                className="text-[13px] font-medium text-[var(--color-text)] truncate"
+                                title={u.file.name}
+                              >
+                                {u.file.name}
+                              </div>
+                              <div className="text-[10.5px] text-[var(--color-text-muted)] num">
+                                {(u.file.size / 1024).toFixed(0)} KB
                               </div>
                             </div>
-                          )}
+                          </div>
                         </td>
-                      )}
 
-                      <td className="px-2 py-3 align-top text-right">
-                        {!showResults ? (
-                          <button
-                            type="button"
-                            aria-label={`Remove ${u.file.name}`}
-                            onClick={() => removeUpload(u.id)}
-                            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[#94A3B8] hover:text-[#DC2626] hover:bg-[#FEF2F2] transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="h-4 w-4" aria-hidden />
-                          </button>
-                        ) : ev?.result ? (
-                          <button
-                            type="button"
-                            aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
-                            aria-expanded={isExpanded}
-                            onClick={() => toggleExpand(u.id)}
-                            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[#94A3B8] hover:text-[#1B4F8A] hover:bg-[#EEF4FB] transition-colors cursor-pointer"
-                          >
-                            {isExpanded ? (
-                              <ChevronUp className="h-4 w-4" aria-hidden />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" aria-hidden />
+                        {!showResults &&
+                          fields.map((f) => {
+                            const hasError = rowErrSet?.has(f.key) ?? false
+                            const value = (row[f.key] ?? '') as string
+                            const isTextarea =
+                              f.key === 'governmentWarning' || f.key === 'producerAddress'
+                            return (
+                              <td key={f.key} className="px-2 py-2 align-top">
+                                {isTextarea ? (
+                                  <textarea
+                                    value={value}
+                                    onChange={(e) => updateRow(u.id, f.key, e.target.value)}
+                                    rows={2}
+                                    className={`w-full min-w-[150px] text-[12.5px] rounded-md border ${hasError ? 'border-[var(--color-flag)] bg-[var(--color-flag-bg)] text-[var(--color-flag)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'} px-2 py-1.5 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 font-mono transition-colors leading-snug`}
+                                    aria-invalid={hasError}
+                                  />
+                                ) : (
+                                  <input
+                                    type="text"
+                                    value={value}
+                                    onChange={(e) => updateRow(u.id, f.key, e.target.value)}
+                                    className={`w-full h-8 text-[12.5px] rounded-md border ${hasError ? 'border-[var(--color-flag)] bg-[var(--color-flag-bg)] text-[var(--color-flag)]' : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]'} px-2 focus:outline-none focus:border-[var(--color-primary)] focus:ring-2 focus:ring-[var(--color-primary)]/20 font-mono transition-colors`}
+                                    aria-invalid={hasError}
+                                  />
+                                )}
+                              </td>
+                            )
+                          })}
+
+                        {showResults && (
+                          <td className="px-4 py-3 align-top">
+                            <ResultCell ev={ev} batchStatus={batchStatus} />
+                            {isExpanded && ev?.result && (
+                              <div className="mt-3 space-y-3 fade-up">
+                                <VisualLimitationNotice />
+                                <div className="border border-[var(--color-border)] rounded-md overflow-hidden bg-[var(--color-surface-quiet)]">
+                                  {ev.result.fields.map((fr, i) => (
+                                    <FieldResultRow
+                                      key={fr.fieldKey}
+                                      result={fr}
+                                      isLast={i === ev.result!.fields.length - 1}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
                             )}
-                          </button>
-                        ) : null}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
+                          </td>
+                        )}
+
+                        <td className="px-2 py-3 align-top text-right">
+                          {!showResults ? (
+                            <button
+                              type="button"
+                              aria-label={`Remove ${u.file.name}`}
+                              onClick={() => removeUpload(u.id)}
+                              className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-flag)] hover:bg-[var(--color-background-alt)] transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="h-4 w-4" aria-hidden />
+                            </button>
+                          ) : ev?.result ? (
+                            <button
+                              type="button"
+                              aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
+                              aria-expanded={isExpanded}
+                              onClick={() => toggleExpand(u.id)}
+                              className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] hover:bg-[var(--color-background-alt)] transition-colors cursor-pointer"
+                            >
+                              {isExpanded ? (
+                                <ChevronUp className="h-4 w-4" aria-hidden />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" aria-hidden />
+                              )}
+                            </button>
+                          ) : null}
+                        </td>
+                      </tr>
+                    )
+                 })}
+               </tbody>
+             </table>
+           </div>
+         </section>
+       )}
 
       {/* Actions */}
       <div className="flex flex-wrap items-center gap-3 sticky bottom-0 z-10">
@@ -685,15 +654,15 @@ export default function BatchVerifyPage() {
                 </>
               )}
             </button>
-            <p className="text-[12px] text-[#64748B] ml-auto sm:ml-0">
+            <p className="text-[12px] text-[var(--color-text-secondary)] ml-auto sm:ml-0">
               All labels run in parallel via SSE — results stream as each completes.
             </p>
           </div>
         )}
         {batchStatus === 'done' && (
           <div className="flex items-center gap-3 w-full justify-between">
-            <p className="text-[13px] text-[#475569] inline-flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-[#16A34A]" aria-hidden />
+            <p className="text-[13px] text-[var(--color-text-secondary)] inline-flex items-center gap-2">
+              <Trophy className="h-4 w-4 text-[var(--color-pass)]" aria-hidden />
               Batch complete · review flagged rows, then start a new batch.
             </p>
             <button type="button" onClick={newBatch} className="btn-ghost">
@@ -716,18 +685,18 @@ function BatchEmptyState({
 }) {
   return (
     <div className="card panel-accent relative overflow-hidden p-8 flex flex-col items-center text-center gap-4 fade-up">
-      <span className="relative h-16 w-16 rounded-lg bg-[#EEF4FB] inline-flex items-center justify-center ring-1 ring-[#DCE9F5]">
+      <span className="relative h-16 w-16 rounded-lg bg-[var(--color-surface-quiet)] border border-[var(--color-border)] inline-flex items-center justify-center shadow-md">
         <Files
-          className="h-7 w-7 text-[#1B4F8A]"
+          className="h-7 w-7 text-[var(--color-primary)]"
           aria-hidden
           strokeWidth={1.75}
         />
       </span>
       <div className="max-w-md relative">
-        <h3 className="text-[17px] font-semibold text-[#0F172A]">
+        <h3 className="text-[17px] font-bold text-[var(--color-text)]" style={{ fontFamily: 'var(--font-outfit), sans-serif' }}>
           No labels queued yet
         </h3>
-        <p className="text-[13.5px] text-[#475569] mt-2 leading-relaxed">
+        <p className="text-[13.5px] text-[var(--color-text-secondary)] mt-2 leading-relaxed">
           Drop a stack of labels into the upload zone above. We&rsquo;ll generate
           one inline form row per file. The whole batch runs in parallel with a
           5-second SLA per label.
@@ -751,8 +720,8 @@ function BatchEmptyState({
           </>
         )}
       </button>
-      <p className="text-[11.5px] text-[#94A3B8] relative">
-        Demo batch contains one PASS, one ABV mismatch, and one degraded label.
+      <p className="text-[11.5px] text-[var(--color-text-muted)] relative">
+        Demo batch contains three diverse sample labels for testing.
       </p>
     </div>
   )
@@ -767,9 +736,9 @@ function ResultCell({
 }) {
   if (!ev) {
     return (
-      <div className="flex items-center gap-2 text-sm text-[#94A3B8]">
+      <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
         <Loader2
-          className={`h-4 w-4 ${batchStatus === 'loading' ? 'animate-spin' : ''} text-[#94A3B8]`}
+          className={`h-4 w-4 ${batchStatus === 'loading' ? 'animate-spin' : ''} text-[var(--color-text-muted)]`}
           aria-hidden
         />
         <span>Processing…</span>
@@ -778,7 +747,7 @@ function ResultCell({
   }
   if (ev.error) {
     return (
-      <div className="flex items-start gap-2 text-sm text-[#B91C1C]" role="alert">
+      <div className="flex items-start gap-2 text-sm text-[var(--color-flag)]" role="alert">
         <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" aria-hidden />
         <span>{ev.error}</span>
       </div>
@@ -790,13 +759,13 @@ function ResultCell({
     const passCount = r.fields.filter((f) => f.status === 'pass').length
     return (
       <div className="flex items-center gap-2 text-sm">
-        <CheckCircle2 className="h-4 w-4 text-[#16A34A]" aria-hidden />
-        <span className="font-semibold text-[#15803D]">PASS</span>
-        <span className="text-[#475569]">
-          <span className="num">{passCount}</span> of{' '}
+        <CheckCircle2 className="h-4 w-4 text-[var(--color-pass)]" aria-hidden />
+        <span className="font-semibold text-[var(--color-pass)]">PASS</span>
+        <span className="text-[var(--color-text-secondary)]">
+          <span className="num font-bold text-[var(--color-text)]">{passCount}</span> of{' '}
           <span className="num">{r.fields.length}</span> fields matched
         </span>
-        <span className="text-[#94A3B8] text-xs num ml-1">
+        <span className="text-[var(--color-text-muted)] text-xs num ml-1">
           · {(r.processingMs / 1000).toFixed(1)}s
         </span>
       </div>
@@ -806,11 +775,11 @@ function ResultCell({
     const firstFlag = r.fields.find((f) => f.status === 'flag')
     return (
       <div className="flex items-start gap-2 text-sm">
-        <XCircle className="h-4 w-4 text-[#DC2626] mt-0.5" aria-hidden />
+        <XCircle className="h-4 w-4 text-[var(--color-flag)] mt-0.5" aria-hidden />
         <div className="min-w-0">
-          <div className="font-semibold text-[#B91C1C]">FLAG</div>
+          <div className="font-semibold text-[var(--color-flag)]">FLAG</div>
           {firstFlag && (
-            <div className="text-[#475569] text-[12px] mt-0.5">
+            <div className="text-[var(--color-text-secondary)] text-[12px] mt-0.5">
               {firstFlag.reason ?? firstFlag.fieldName}
             </div>
           )}
@@ -821,11 +790,11 @@ function ResultCell({
   const firstReview = r.fields.find((f) => f.status === 'needs-review')
   return (
     <div className="flex items-start gap-2 text-sm">
-      <HelpCircle className="h-4 w-4 text-[#D97706] mt-0.5" aria-hidden />
+      <HelpCircle className="h-4 w-4 text-[var(--color-review)] mt-0.5" aria-hidden />
       <div className="min-w-0">
-        <div className="font-semibold text-[#B45309]">NEEDS REVIEW</div>
+        <div className="font-semibold text-[var(--color-review)]">NEEDS REVIEW</div>
         {firstReview && (
-          <div className="text-[#475569] text-[12px] mt-0.5">
+          <div className="text-[var(--color-text-secondary)] text-[12px] mt-0.5">
             {firstReview.reason ?? firstReview.fieldName}
           </div>
         )}

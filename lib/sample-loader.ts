@@ -7,8 +7,8 @@ import type { MockDataset } from './types'
  * Test labels are committed in /public/test-labels/<key>.jpg — see scripts/generate-labels.mjs.
  */
 export async function loadSampleFile(ds: MockDataset): Promise<File> {
-  const url = `/test-labels/${ds.label}.jpg`
-  const res = await fetch(url, { cache: 'force-cache' })
+  const url = `/test-labels/${ds.label}.jpg?v=${Date.now()}`
+  const res = await fetch(url, { cache: 'no-store' })
   if (!res.ok) {
     throw new Error(`Sample label not found at ${url} (HTTP ${res.status})`)
   }

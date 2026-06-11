@@ -80,10 +80,9 @@ export async function POST(request: NextRequest) {
     }
 
     const beverageType: BeverageType = beverageTypeRaw
-    const isImport = isImportRaw === 'true'
     const submittedFields = parseFormFields(formData)
 
-    const validation = validateFormData(beverageType, isImport, submittedFields)
+    const validation = validateFormData(beverageType, submittedFields)
     if (!validation.ok) {
       return NextResponse.json(
         {
@@ -95,7 +94,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const result = await processSingleLabel(file, beverageType, isImport, submittedFields)
+    const result = await processSingleLabel(file, beverageType, submittedFields)
     result.processingMs = Date.now() - start
     return NextResponse.json(result)
   } catch (err: unknown) {
@@ -140,7 +139,6 @@ export class UnreadableImageError extends Error {
 export async function processSingleLabel(
   file: File,
   beverageType: BeverageType,
-  isImport: boolean,
   submittedFields: Partial<LabelFormData>,
 ) {
   // 1. Read file bytes
@@ -159,14 +157,12 @@ export async function processSingleLabel(
   }
 
   // 3. Build extraction input from field config — single source of truth
-  const fieldList = BEVERAGE_FIELDS[beverageType].filter((f) =>
-    f.required === 'if-import' ? isImport : true,
-  )
+  const fieldList = BEVERAGE_FIELDS[beverageType]
   const extractionInput: ExtractionInput = {
     imageBase64,
     mimeType,
     beverageType,
-    importedProduct: isImport,
+    importedProduct: false,
     fieldList,
     filename: file.name,
     submittedFields,
@@ -182,5 +178,5 @@ export async function processSingleLabel(
   }
 
   // 6. Compare fields
-  return compareFields(extraction, submittedFields, beverageType, isImport)
+  return compareFields(extraction, submittedFields, beverageType)
 }

@@ -62,19 +62,19 @@ export function FileDropZone({
     const isPdf = /\.pdf$/i.test(file.name)
     return (
       <div className="space-y-2 fade-up">
-        <div className="group relative flex items-center gap-3 rounded-md bg-[#F0FDF4] border border-[#BBF7D0] px-3 py-2.5">
-          <span className="h-10 w-10 rounded-md bg-white border border-[#BBF7D0] inline-flex items-center justify-center shrink-0">
-            <Icon className="h-4.5 w-4.5 text-[#16A34A]" aria-hidden />
+        <div className="group relative flex items-center gap-3 rounded-md bg-[var(--color-pass-bg)] border border-[var(--color-pass-border)] px-3 py-2.5 shadow-[0_0_12px_var(--color-pass-border)]">
+          <span className="h-10 w-10 rounded-md bg-[var(--color-surface)] border border-[var(--color-pass-border)] inline-flex items-center justify-center shrink-0">
+            <Icon className="h-4.5 w-4.5 text-[var(--color-pass)]" aria-hidden />
           </span>
           <div className="flex-1 min-w-0">
             <div
-              className="text-[13.5px] font-semibold text-[#0F172A] truncate flex items-center gap-1.5"
+              className="text-[13.5px] font-semibold text-[var(--color-text)] truncate flex items-center gap-1.5"
               title={file.name}
             >
-              <CheckCircle2 className="h-3.5 w-3.5 text-[#16A34A] shrink-0" aria-hidden />
+              <CheckCircle2 className="h-3.5 w-3.5 text-[var(--color-pass)] shrink-0" aria-hidden />
               {file.name}
             </div>
-            <div className="text-[11px] text-[#15803D] num mt-0.5">
+            <div className="text-[11px] text-[var(--color-pass)] num mt-0.5">
               {formatBytes(file.size)} · Ready to verify
             </div>
           </div>
@@ -82,14 +82,14 @@ export function FileDropZone({
             type="button"
             onClick={() => onFile(null)}
             aria-label="Remove file"
-            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[#475569] hover:text-[#DC2626] hover:bg-white transition-colors cursor-pointer"
+            className="h-8 w-8 inline-flex items-center justify-center rounded-md text-[var(--color-text-secondary)] hover:text-[var(--color-flag)] hover:bg-[var(--color-background-alt)] transition-colors cursor-pointer"
           >
             <X className="h-4 w-4" aria-hidden />
           </button>
         </div>
         {isPdf && (
-          <div className="flex items-start gap-1.5 text-[11px] text-[#475569] px-1">
-            <Info className="h-3 w-3 mt-0.5 shrink-0 text-[#1B4F8A]" aria-hidden />
+          <div className="flex items-start gap-1.5 text-[11px] text-[var(--color-text-secondary)] px-1">
+            <Info className="h-3 w-3 mt-0.5 shrink-0 text-[var(--color-primary)]" aria-hidden />
             <span>Page 1 of the PDF will be rasterized client-side before upload.</span>
           </div>
         )}
@@ -108,45 +108,45 @@ export function FileDropZone({
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
-        className={`group w-full rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-3 px-4 py-7 transition-all duration-200 cursor-pointer text-center ${
+        className={`group w-full rounded-lg border-2 border-dashed flex items-center gap-3 px-3.5 py-3 transition-all duration-200 cursor-pointer ${
           dragOver
-            ? 'border-[#1B4F8A] bg-[#EEF4FB] shadow-inner'
+            ? 'border-[var(--color-primary)] bg-[var(--color-primary-tint-strong)] shadow-inner animate-pulse'
             : error
-              ? 'border-[#FECACA] bg-[#FEF2F2]/50 hover:bg-[#FEF2F2]'
-              : 'border-[#CBD5E1] bg-white hover:border-[#1B4F8A] hover:bg-[#EEF4FB]/50'
+              ? 'border-[var(--color-flag)] bg-[var(--color-flag-bg)] hover:bg-[var(--color-flag-bg)]/80'
+              : 'border-[var(--color-border)] bg-[var(--color-surface-quiet)] hover:border-[var(--color-primary)]/70 hover:bg-[var(--color-surface-elevated)]'
         }`}
       >
         <span
-          className={`relative h-12 w-12 rounded-md inline-flex items-center justify-center transition-colors duration-200 ${
-            dragOver ? 'bg-[#1B4F8A]' : 'bg-[#EEF4FB]'
+          className={`relative h-8 w-8 rounded-md inline-flex items-center justify-center shrink-0 transition-all duration-300 group-hover:-translate-y-0.5 ${
+            dragOver ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-surface)] border border-[var(--color-border)]'
           }`}
         >
           <Upload
-            className={`h-5 w-5 ${dragOver ? 'text-white' : 'text-[#1B4F8A]'}`}
+            className={`h-4 w-4 ${dragOver ? 'text-white' : 'text-[var(--color-primary)]'}`}
             aria-hidden
             strokeWidth={2.25}
           />
         </span>
-        <div className="space-y-1">
-          <div className="text-[14px] font-semibold text-[#0F172A]">
-            {multiple ? 'Drop label files here' : 'Drop label here or click to browse'}
+        <div>
+          <div className="text-[13px] font-semibold text-[var(--color-text)] group-hover:text-[var(--color-primary)] transition-colors">
+            {multiple ? 'Drop files or click to browse' : 'Drop label or click to browse'}
           </div>
-          <div className="text-[12px] text-[#64748B]">
+          <div className="text-[11.5px] text-[var(--color-text-muted)]">
             {multiple
-              ? 'JPG, PNG, or PDF · select multiple at once'
+              ? 'JPG, PNG, or PDF · multiple'
               : 'JPG, PNG, or PDF · up to 10 MB'}
           </div>
           {helperHint && (
-            <div className="text-[11px] text-[#94A3B8] mt-1">{helperHint}</div>
+            <div className="text-[11px] text-[var(--color-text-muted)]">{helperHint}</div>
           )}
         </div>
       </button>
       {error && (
         <p
           role="alert"
-          className="text-[12px] text-[#DC2626] flex items-center gap-1.5 fade-up"
+          className="text-[12px] text-[var(--color-flag)] flex items-center gap-1.5 fade-up"
         >
-          <span className="h-1 w-1 rounded-full bg-[#DC2626]" aria-hidden />
+          <span className="h-1 w-1 rounded-full bg-[var(--color-flag)]" aria-hidden />
           {error}
         </p>
       )}

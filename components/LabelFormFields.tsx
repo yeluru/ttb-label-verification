@@ -5,7 +5,6 @@ import { getApplicableFields } from '@/lib/beverage-fields'
 
 interface Props {
   beverageType: BeverageType
-  isImport: boolean
   formData: Partial<LabelFormData>
   onChange: (key: LabelFieldKey, value: string) => void
   errors: Set<LabelFieldKey>
@@ -16,19 +15,17 @@ const TEXTAREA_FIELDS = new Set<LabelFieldKey>(['governmentWarning', 'producerAd
 
 export function LabelFormFields({
   beverageType,
-  isImport,
   formData,
   onChange,
   errors,
   warningTextareaRef,
 }: Props) {
-  const fields = getApplicableFields(beverageType, isImport)
+  const fields = getApplicableFields(beverageType)
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {fields.map((f) => {
-        const required =
-          f.required === 'always' || (f.required === 'if-import' && isImport)
+        const required = f.required === 'always'
         const optionalLabel =
           f.required === 'optional' || f.required === 'conditional'
             ? '(optional)'
@@ -41,20 +38,20 @@ export function LabelFormFields({
 
         return (
           <div key={f.key}>
-            <div className="flex items-baseline justify-between mb-1.5">
+            <div className="flex items-baseline justify-between mb-1">
               <label
                 htmlFor={`field-${f.key}`}
-                className="text-[13px] font-medium text-[#0F172A]"
+                className="text-[13px] font-semibold text-[var(--color-text)]"
               >
                 {f.label}
                 {required && (
-                  <span className="text-[#DC2626] ml-0.5" aria-hidden>
+                  <span className="text-[var(--color-flag)] ml-0.5" aria-hidden>
                     *
                   </span>
                 )}
               </label>
               {optionalLabel && (
-                <span className="text-[11px] text-[#94A3B8]">{optionalLabel}</span>
+                <span className="text-[11.5px] text-[var(--color-text-secondary)]">{optionalLabel}</span>
               )}
             </div>
             {TEXTAREA_FIELDS.has(f.key) ? (
@@ -74,7 +71,7 @@ export function LabelFormFields({
                 aria-invalid={hasError}
                 aria-describedby={errorId}
                 className={`input-base resize-y leading-relaxed ${
-                  isAddress ? 'min-h-[68px] py-2' : 'min-h-[96px] py-2'
+                  isAddress ? 'min-h-[56px] py-2' : 'min-h-[76px] py-2'
                 }`}
                 style={{ height: 'auto' }}
               />
@@ -97,9 +94,9 @@ export function LabelFormFields({
               <p
                 id={errorId}
                 role="alert"
-                className="text-xs text-[#DC2626] mt-1.5 flex items-center gap-1.5"
+                className="text-xs text-[var(--color-flag)] mt-1.5 flex items-center gap-1.5"
               >
-                <span className="h-1 w-1 rounded-full bg-[#DC2626]" aria-hidden />
+                <span className="h-1 w-1 rounded-full bg-[var(--color-flag)]" aria-hidden />
                 This field is required.
               </p>
             )}

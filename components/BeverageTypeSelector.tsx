@@ -20,7 +20,7 @@ export function BeverageTypeSelector({
     <div
       role="radiogroup"
       aria-label="Beverage type"
-      className="grid grid-cols-3 gap-1 rounded-md border border-[#E2E8F0] bg-[#F1F5F9] p-1"
+      className="grid grid-cols-3 gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-quiet)] p-1"
     >
       {OPTIONS.map((opt) => {
         const active = value === opt.value
@@ -34,8 +34,8 @@ export function BeverageTypeSelector({
             onClick={() => onChange(opt.value)}
             className={`relative h-10 inline-flex items-center justify-center gap-2 rounded-md text-[13px] font-semibold transition-all duration-150 cursor-pointer ${
               active
-                ? 'bg-white text-[#1B4F8A] shadow-[0_1px_2px_0_rgb(15_23_42/0.06),0_1px_3px_0_rgb(15_23_42/0.08)]'
-                : 'text-[#475569] hover:text-[#0F172A] hover:bg-white/60'
+                ? 'bg-[var(--color-primary)] text-white shadow-[0_0_12px_var(--color-primary-tint-strong)]'
+                : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text)] hover:bg-[var(--color-background-alt)]'
             }`}
           >
             <Icon

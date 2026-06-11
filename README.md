@@ -1,307 +1,164 @@
 # TTB AI-Powered Label Verification
 
-**Author:** Venkata Ravi Kumar Yeluru
-**Assignment:** US Treasury / TTB Take-Home Assessment — AI-Powered Label Verification Prototype
+A Next.js prototype for helping TTB reviewers verify alcohol label artwork against submitted COLA form data.
 
-A Next.js 14 prototype that automates the field-matching step of the TTB COLA
-review process. Compliance agents upload an alcohol label image and the
-corresponding form data; the app extracts regulated fields from the label with
-Claude Vision and returns a structured per-field PASS / FLAG / NEEDS REVIEW
-result in under five seconds. Batch mode processes many labels in parallel and
-streams results back over Server-Sent Events.
+The app uploads a label image, extracts regulated fields with Claude Vision, then compares the extracted text against form values using deterministic TypeScript logic. The AI only extracts text. It does not make compliance decisions.
 
-This is a standalone proof-of-concept built for Treasury evaluation. There is no
-COLA IT integration, no authentication, and no data persistence.
-
----
-
-## Testing in 30 seconds
-
-You do **not** need to create any PNGs or JPGs. All 15 test labels are
-**already committed** to `public/test-labels/`. Steps:
+## Quick Start
 
 ```bash
 npm install
-cp .env.example .env.local        # then paste your real ANTHROPIC_API_KEY
-npm run dev                       # http://localhost:3000
-```
-
-In the browser:
-
-1. **Single Verify (`/`):** open the **Quick start** dropdown in the left
-   panel and pick *Spirits — All Fields Pass*. The matching JPG is
-   auto-uploaded, the form is auto-filled with the values printed on
-   that label, and the **Verify label** button lights up. Click it. A
-   PASS result appears in the right panel in under five seconds.
-2. **Try a FLAG case:** pick *Spirits — ABV Mismatch* from Quick start
-   and click Verify. The label shows 46 % but the form says 45 % — the
-   ABV field flags with a clear reason.
-3. **Try NEEDS REVIEW:** pick *Spirits — Degraded Image*. The bundled
-   JPG has a CSS glare overlay; the AI returns low confidence for the
-   obscured field.
-4. **Batch Verify (`/batch`):** click **Seed demo batch (3 labels)** on
-   the empty state. Three bundled spirits labels are queued with their
-   form rows pre-filled. Click **Verify batch** to watch results stream
-   in over SSE — one row per label, in real time.
-
-> **About the folders.** The `test-labels/` folder at the project root
-> only holds the **HTML source** for each label (committed so reviewers
-> can see exactly what text each label contains). The actual JPGs the
-> app uses live in `public/test-labels/` and are served by Next.js. You
-> never need to navigate either folder by hand — Quick start handles
-> the upload for you. See `test-labels/README.md` for the full
-> source-to-image mapping.
-
-### Without an API key
-
-If `ANTHROPIC_API_KEY` is missing, the server falls back to a
-`MockProvider` that returns canned extraction values. You can click
-through the UI and verify the app shell without spending tokens, but
-the mock cannot read the actual image and does not prove OCR accuracy.
-Set a real key to exercise the FLAG / NEEDS REVIEW paths against the
-bundled labels.
-
----
-
-## Quick start (long form)
-
-```bash
-# 1. Install dependencies
-npm install
-
-# 2. Add your Anthropic key (optional — see "Without an API key" above)
-cp .env.example .env.local
-# then edit .env.local and set ANTHROPIC_API_KEY=sk-ant-...
-
-# 3. Run the dev server
 npm run dev
-# Open http://localhost:3000
-
-# 4. Build for production
-npm run build && npm start
 ```
 
-### Without an API key
+Open `http://localhost:3000`.
 
-If `ANTHROPIC_API_KEY` is not set, the app falls back to a `MockProvider` that
-returns canned extraction values. This lets you click through the UI without
-spending tokens, but it does *not* actually read the image. Set the key to see
-real extraction.
+To test without an Anthropic key, use the built-in sample labels from the Quick start menu. When `ANTHROPIC_API_KEY` is not set, the app falls back to `MockProvider` for local development.
 
-### Optional — regenerate test labels
+## Real AI Setup
 
-The 15 test label JPGs in `public/test-labels/` are committed to the repo so
-the deployed app and the README links work out of the box. To regenerate them
-(after editing `scripts/generate-labels.mjs`):
+Copy the example environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+Set:
+
+```bash
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+ANTHROPIC_MODEL=claude-3-5-sonnet-20241022
+```
+
+Restart the dev server after changing environment variables.
+
+If verification returns `503` with "Verification service is temporarily unavailable", check the terminal logs first. Common causes are a missing API key, an unsupported model name, an expired key, account permission errors, rate limits, or upstream provider downtime.
+
+## What The App Supports
+
+- Single label verification at `/`
+- Batch verification at `/batch`
+- Beverage types: spirits, wine, and beer
+- Upload formats: JPG, PNG, and PDF
+- Bundled sample labels in `public/test-labels`
+- Deterministic PASS, FLAG, and NEEDS REVIEW results
+- Field-by-field comparison details
+- Mock-provider mode for local demos without external API calls
+
+## Verification Flow
+
+```mermaid
+sequenceDiagram
+    participant User as Reviewer
+    participant API as Next.js API
+    participant AI as Claude Vision
+    participant Compare as compareFields()
+
+    User->>API: Upload label + form data
+    API->>API: Validate and resize image
+    API->>AI: Send image + requested field list
+    AI-->>API: Return structured JSON extraction
+    API->>Compare: Compare extraction with form data
+    Compare-->>API: PASS, FLAG, or NEEDS REVIEW
+    API-->>User: Render field-level result
+```
+
+## Standards Followed
+
+- The model extracts label text only; compliance status is computed in code.
+- Form data is not sent to the model, so the model cannot bias extraction toward submitted values.
+- Field configuration lives in `lib/beverage-fields.ts`.
+- Comparison logic lives in `lib/field-comparison.ts`.
+- API keys are read server-side only.
+- Model responses are parsed and normalized before comparison.
+- Missing or malformed AI fields become NEEDS REVIEW instead of silently passing.
+- The standard government warning is checked with exact text logic after whitespace normalization.
+- Optional fields pass only when both the form and label omit them.
+
+For deeper agent architecture and prompt details, read `AGENTS.md`.
+
+## Test Labels
+
+The app includes 24 JPG labels in `public/test-labels`. They cover pass cases, mismatches, missing warnings, optional ABV behavior, appellation checks, import-country checks, and degraded-image review behavior.
+
+Use the Quick start menu on the single verify page, or click "Seed demo batch" on the batch page.
+
+If you edit label source HTML in `test-labels`, regenerate JPGs with:
 
 ```bash
 npm run generate-labels
 ```
 
-This rasterizes the HTML source files in `test-labels/html/` to JPGs using
-Puppeteer.
+## Development Commands
 
----
-
-## Approach
-
-The application is organized as a modular Next.js 14 monolith. Frontend and API
-live in the same project so a single `git push` deploys the whole stack to
-Vercel.
-
-```
-                ┌────────────────────────────────────────────┐
-                │                                            │
-                │   Agent uploads label  +  fills form       │
-                │                                            │
-                └──────────────────────┬─────────────────────┘
-                                       │
-                  (PDF → PNG on the client via pdfjs-dist)
-                                       │
-                                       ▼
-            POST /api/verify    POST /api/batch (SSE stream)
-                                       │
-                ┌──────────────────────┴─────────────────────┐
-                │  1. sharp — resize image to ≤ 1568px       │
-                │  2. AnthropicProvider → claude-3-5-sonnet  │
-                │     · temperature 0, max_tokens 1500       │
-                │     · strict JSON schema, field-by-field   │
-                │  3. compareFields() — fuzzy / numeric /    │
-                │     exact matching per FR-04 rules         │
-                └────────────────────────────────────────────┘
-                                       │
-                                       ▼
-                       PASS / FLAG / NEEDS REVIEW
+```bash
+npm run dev              # Start local dev server
+npm run lint             # Run Next.js lint checks
+npm run build            # Create production build
+npm test                 # Run logic and mock-provider tests
+npm run generate-labels  # Rebuild sample label JPGs
 ```
 
-**Separation of concerns.** Business logic lives in `/lib`. The pages in `/app`
-are presentation-only; they never instantiate the AI provider directly. The API
-routes are the only place where Anthropic is contacted. This means the AI key
-never reaches the client bundle and the model never sees the agent's form
-values — it only receives the image and a list of field *names* to extract.
-Comparison happens entirely in `compareFields()` (pure TypeScript) so the
-verdict is deterministic and auditable.
+Run these before calling a change ready:
 
-**Why one AI agent, not several.** All compliance decisions live in
-`compareFields()`. The AI is a glorified OCR — it extracts text and tags each
-field as `high` or `low` confidence. Everything downstream — pass / flag /
-needs-review, overall verdict, optional-field semantics — is rule-based. This
-keeps the system explainable and prevents the model from "creatively
-interpreting" labels.
-
-**Streaming batch.** `/api/batch` runs `Promise.allSettled` across N labels and
-emits an SSE `result` event as each settles, plus a final `done` event with
-aggregate counts. One failure never blocks the rest.
-
----
-
-## Tools used
-
-| Tool | Purpose |
-|------|---------|
-| Next.js 14 (App Router) | Web framework — pages + API routes in one project |
-| TypeScript (strict mode) | Type safety, especially across the comparison + AI parsing layer |
-| Tailwind CSS 3 | Utility-first styling — government-appropriate Enterprise Minimal theme |
-| Lucide React | Icon set — used for status indicators (CheckCircle2 / XCircle / HelpCircle) |
-| Anthropic SDK | Calls `ANTHROPIC_MODEL` (`claude-sonnet-4-6` by default) with vision input + structured JSON output |
-| sharp | Server-side resize of label images to ≤ 1568px on the long edge |
-| pdfjs-dist | **Client-side** PDF page-1 → PNG rasterization (server can't run canvas natives on Vercel) |
-| Puppeteer | Build-time only — rasterizes the HTML test labels to JPG so the repo carries the test set |
-| Vercel | Deployment target — `runtime = 'nodejs'` + `dynamic = 'force-dynamic'` on both API routes |
-
----
-
-## Assumptions
-
-- **Government firewall.** The deployed prototype assumes outbound HTTPS to
-  `api.anthropic.com` is allowed. If TTB internal hosting blocks Anthropic, the
-  provider abstraction (`lib/ai-provider.ts`) accepts an alternate
-  implementation behind the same interface.
-- **Label format.** Labels are submitted as JPG, PNG, or PDF. PDFs are
-  rasterized on the client to PNG before upload; the server never sees raw PDF
-  bytes.
-- **Image quality.** Labels are at least readable to a human. Angled or
-  partially obscured fields surface as `needs-review` rather than hard errors.
-- **One beverage type per batch.** Mixed-type batches are out of scope per the
-  PRD; both the beverage type and the import toggle apply to the whole batch.
-- **Test data only.** No real TTB labels are bundled. Every JPG in
-  `public/test-labels/` is generated from the HTML source in
-  `test-labels/html/`.
-- **Network latency.** The < 5-second SLA assumes Anthropic's median vision
-  latency holds. Cold function starts on Vercel can add ~500–1500ms on the
-  first request; subsequent requests are well within budget.
-
----
-
-## Trade-offs and known limitations
-
-- **Bold formatting cannot be verified.** TTB requires the government warning
-  to be in bold. Claude Vision does not reliably expose font-weight metadata
-  from a rasterized image. The UI displays a permanent "Visual limitation"
-  notice on every result instructing the agent to confirm bold formatting
-  manually.
-- **Font size / prominence cannot be verified.** Same rationale — font
-  prominence is a layout property, not a textual property. The same notice
-  covers this.
-- **No COLA IT integration.** Form data is entered by hand or via the
-  "Load Sample" dropdown. A future integration could pull form data directly
-  given a COLA application ID.
-- **MockProvider uses canned values.** When no API key is present, the mock
-  provider returns representative extraction text. This is useful for clicking
-  through the UI but it does *not* exercise real OCR or all mismatch scenarios.
-  Use a real key to validate FLAG and NEEDS REVIEW behavior.
-- **No automated test suite.** PRD Section 9's 27 manual test cases are the
-  acceptance criteria. The pure functions in `lib/field-comparison.ts` are the
-  highest-value candidates for unit tests if this moves past prototype.
-- **Vercel function timeout.** Hobby tier is 10 seconds; batches above ~6–8
-  labels need Vercel Pro for the 60-second timeout. The README on Vercel
-  recommends Pro.
-- **No retry on Anthropic 429 / 5xx.** A 503 surfaces immediately to the
-  agent with a "service temporarily unavailable" message and the form data is
-  preserved so they can retry.
-- **AI vision accuracy on real-world labels.** Test images are clean HTML
-  screenshots. Production label artwork (foil-stamped, embossed, low-contrast
-  print) will see lower extraction confidence than these tests demonstrate.
-
----
-
-## Project layout
-
+```bash
+npm run lint
+npm run build
+npm test
 ```
+
+## Project Layout
+
+```text
 app/
-  layout.tsx              Root layout — Inter + JetBrains Mono fonts, top nav
-  page.tsx                Single Verify page (/)
-  batch/page.tsx          Batch Verify page (/batch)
-  api/verify/route.ts     POST /api/verify — single label
-  api/batch/route.ts      POST /api/batch — SSE streaming batch
-  globals.css             Tailwind directives, base styles
-components/               UI primitives + result rows + form fields
+  page.tsx              Single label verification UI
+  batch/page.tsx        Batch verification UI
+  api/verify/route.ts   Single label API route
+  api/batch/route.ts    Batch SSE API route
+
+components/             Shared UI components
+
 lib/
-  types.ts                Single-source-of-truth TypeScript types
-  beverage-fields.ts      Field registry per beverage type (drives form + prompt)
-  field-comparison.ts     compareFields(), TTB warning text, fuzzy + numeric + exact algorithms
-  ai-provider.ts          AnthropicProvider + MockProvider + system prompt
-  provider-factory.ts     Selects provider based on ANTHROPIC_API_KEY
-  validation.ts           Form-side required-field validation
-  image-preprocessor.ts   sharp-based server-side resize
-  pdf-preprocessor.ts     pdfjs-dist client-side PDF → PNG
-  mock-data.ts            15 test datasets matching the JPGs in public/test-labels/
-public/test-labels/       Committed JPGs (regenerated by scripts/generate-labels.mjs)
-test-labels/html/         HTML source for each test label (source of truth)
-scripts/generate-labels.mjs  Puppeteer-driven build script
+  ai-provider.ts        Anthropic and mock extraction providers
+  beverage-fields.ts    Field lists and required/optional rules
+  field-comparison.ts   Pure comparison and verdict logic
+  validation.ts         Server/client form validation helpers
+  image-preprocessor.ts Server image resizing
+  pdf-preprocessor.ts   Client PDF rasterization
+
+public/test-labels/     Runtime JPG sample labels
+test-labels/            Source HTML for generated labels
+scripts/                Label generation and test utilities
+AGENTS.md               Detailed agent architecture
 ```
 
----
+## Deployment
 
-## Mapping test cases to test labels
+This app can run on Vercel, Render, or any Node-compatible host.
 
-Each test case from PRD Section 9 maps to one of the 15 datasets in
-`lib/mock-data.ts` and the corresponding JPG in `public/test-labels/`.
+Required production settings:
 
-| Dataset (Load Sample) | Label JPG | Expected |
-|-----------------------|-----------|----------|
-| Spirits — All Fields Pass | spirits-pass.jpg | PASS |
-| Spirits — ABV Mismatch (FLAG) | spirits-abv-mismatch.jpg | FLAG (ABV) |
-| Spirits — Brand Casing (PASS) | spirits-brand-case.jpg | PASS |
-| Spirits — Brand Mismatch (FLAG) | spirits-brand-mismatch.jpg | FLAG (brand) |
-| Spirits — Warning Title Case (FLAG) | spirits-warning-titlecase.jpg | FLAG (warning) |
-| Spirits — Warning Wording Changed (FLAG) | spirits-warning-wording.jpg | FLAG (warning) |
-| Spirits — Warning Missing (FLAG) | spirits-warning-missing.jpg | FLAG (warning) |
-| Spirits — Import Match (PASS) | spirits-import-pass.jpg | PASS |
-| Spirits — Import Mismatch (FLAG) | spirits-import-mismatch.jpg | FLAG (country) |
-| Spirits — Degraded Image | spirits-degraded.jpg | NEEDS REVIEW |
-| Wine — ABV Blank Pass | wine-abv-blank-pass.jpg | PASS |
-| Wine — ABV on Label, Blank Form (FLAG) | wine-abv-blank-flag.jpg | FLAG (ABV) |
-| Wine — Appellation Match (PASS) | wine-appellation-pass.jpg | PASS |
-| Beer — ABV Blank Pass | beer-abv-blank-pass.jpg | PASS |
-| Beer — ABV on Label, Blank Form (FLAG) | beer-abv-on-label.jpg | FLAG (ABV) |
+- Node.js 20
+- `ANTHROPIC_API_KEY`
+- `ANTHROPIC_MODEL`
 
-To run a test case on the deployed app: open the URL, select the matching
-"Load Sample" entry, download the corresponding JPG from `public/test-labels/`
-and upload it, then click **Verify Label**.
+Build and start:
 
----
+```bash
+npm install
+npm run build
+npm start
+```
 
-## Deployment to Vercel
+Batch processing uses server-sent events and concurrent AI requests. For larger batches, prefer a deployment target with enough function duration and provider rate-limit headroom.
 
-1. Push this repository to GitHub.
-2. In Vercel: **New Project** → import the GitHub repo.
-3. Set the environment variable `ANTHROPIC_API_KEY` in **Project Settings →
-   Environment Variables**.
-4. Deploy. The first build takes ~90 seconds.
-5. Recommended: upgrade the project to **Vercel Pro** so batch function timeout
-   is 60s (Hobby caps at 10s).
+## Reviewer Notes
 
-The deployed URL serves both the UI and the API from one Next.js application
-— no separate API server is needed.
+This is a prototype, not an official TTB compliance system. It is designed to demonstrate a safe architecture:
 
----
+- AI extraction is isolated from compliance judgment.
+- Deterministic code owns all result statuses.
+- Reviewers get transparent field-level reasons.
+- Uncertainty is surfaced as NEEDS REVIEW.
 
-## Security notes
-
-- `ANTHROPIC_API_KEY` is never exposed to the client. `AnthropicProvider` is
-  only instantiated inside server-side API routes.
-- `.env.local` is in `.gitignore`; `.env.example` is committed as a template.
-- No image bytes or form data are persisted anywhere. The Vercel function
-  discards all state when the invocation ends.
-- HTTPS is enforced by Vercel on all traffic.
+When evaluating the project, start with the bundled sample labels, then test one real label with a valid Anthropic key.

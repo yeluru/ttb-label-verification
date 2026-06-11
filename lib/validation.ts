@@ -29,15 +29,13 @@ export interface ValidationResult {
  */
 export function validateFormData(
   beverageType: BeverageType,
-  isImport: boolean,
   formData: Partial<LabelFormData>,
 ): ValidationResult {
-  const fields = getApplicableFields(beverageType, isImport)
+  const fields = getApplicableFields(beverageType)
   const missing: LabelFieldKey[] = []
 
   for (const f of fields) {
     if (f.required === 'optional' || f.required === 'conditional') continue
-    if (f.required === 'if-import' && !isImport) continue
     const v = (formData[f.key] ?? '').toString().trim()
     if (!v) missing.push(f.key)
   }

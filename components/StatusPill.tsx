@@ -6,24 +6,24 @@ const STYLES: Record<
   { bg: string; text: string; border: string; ring: string; icon: LucideIcon }
 > = {
   PASS: {
-    bg: 'bg-[#F0FDF4]',
-    text: 'text-[#16A34A]',
-    border: 'border-[#BBF7D0]',
-    ring: 'ring-[#16A34A]/20',
+    bg: 'bg-[var(--color-pass-bg)]',
+    text: 'text-[var(--color-pass)]',
+    border: 'border-[var(--color-pass-border)]',
+    ring: 'ring-[var(--color-pass-border)]',
     icon: CheckCircle2,
   },
   FLAG: {
-    bg: 'bg-[#FEF2F2]',
-    text: 'text-[#DC2626]',
-    border: 'border-[#FECACA]',
-    ring: 'ring-[#DC2626]/20',
+    bg: 'bg-[var(--color-flag-bg)]',
+    text: 'text-[var(--color-flag)]',
+    border: 'border-[var(--color-flag-border)]',
+    ring: 'ring-[var(--color-flag-border)]',
     icon: XCircle,
   },
   'NEEDS REVIEW': {
-    bg: 'bg-[#FFFBEB]',
-    text: 'text-[#D97706]',
-    border: 'border-[#FDE68A]',
-    ring: 'ring-[#D97706]/20',
+    bg: 'bg-[var(--color-review-bg)]',
+    text: 'text-[var(--color-review)]',
+    border: 'border-[var(--color-review-border)]',
+    ring: 'ring-[var(--color-review-border)]',
     icon: HelpCircle,
   },
 }

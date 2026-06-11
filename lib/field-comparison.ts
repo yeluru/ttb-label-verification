@@ -218,9 +218,8 @@ export function compareFields(
   extraction: ExtractionResult,
   formData: Partial<LabelFormData>,
   beverageType: BeverageType,
-  isImport: boolean,
 ): VerificationResult {
-  const fields = getApplicableFields(beverageType, isImport)
+  const fields = getApplicableFields(beverageType)
   const results: FieldResult[] = []
 
   for (const config of fields) {

@@ -1,6 +1,6 @@
 # Test labels — source HTML
 
-This folder contains the **HTML source** files for the 15 test label
+This folder contains the **HTML source** files for the 23 test label
 designs. These are *not* what the app reads at runtime.
 
 ## Where are the JPGs?
@@ -9,7 +9,7 @@ The actual label images the app uploads live in:
 
     public/test-labels/*.jpg
 
-That folder contains 15 committed JPGs — one per test case. Next.js
+That folder contains 23 committed JPGs — one per test case. Next.js
 serves them as static assets, so the deployed app fetches each label
 from `/test-labels/<key>.jpg` (no file system access needed).
 
@@ -51,6 +51,7 @@ That fires up Puppeteer, opens each HTML file, screenshots the
 | spirits-warning-titlecase.html| spirits-warning-titlecase.jpg     |
 | spirits-warning-wording.html  | spirits-warning-wording.jpg       |
 | spirits-warning-missing.html  | spirits-warning-missing.jpg       |
+| spirits-import-prefix-flag.html| spirits-import-prefix-flag.jpg   |
 | spirits-import-pass.html      | spirits-import-pass.jpg           |
 | spirits-import-mismatch.html  | spirits-import-mismatch.jpg       |
 | spirits-degraded.html         | spirits-degraded.jpg              |
@@ -59,3 +60,11 @@ That fires up Puppeteer, opens each HTML file, screenshots the
 | wine-appellation-pass.html    | wine-appellation-pass.jpg         |
 | beer-abv-blank-pass.html      | beer-abv-blank-pass.jpg           |
 | beer-abv-on-label.html        | beer-abv-on-label.jpg             |
+| wine-pass.html                | wine-pass.jpg                     |
+| wine-net-contents-mismatch.html| wine-net-contents-mismatch.jpg    |
+| wine-brand-mismatch.html      | wine-brand-mismatch.jpg           |
+| wine-appellation-mismatch.html| wine-appellation-mismatch.jpg     |
+| beer-pass.html                | beer-pass.jpg                     |
+| beer-net-contents-mismatch.html| beer-net-contents-mismatch.jpg    |
+| beer-brand-mismatch.html      | beer-brand-mismatch.jpg           |
+| beer-warning-missing.html     | beer-warning-missing.jpg          |
